@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/navigation_gallery"
+        android:icon="@drawable/ic_gallery"
+        android:title="갤러리"/>
+
+    <item
+        android:id="@+id/navigation_statistics"
+        android:icon="@drawable/ic_statistics"
+        android:title="통계"/>
+
+    <item
+        android:id="@+id/navigation_sort_receipts"
+        android:icon="@drawable/ic_sort_receipts"
+        android:title="분류"/>
+
+</menu>
