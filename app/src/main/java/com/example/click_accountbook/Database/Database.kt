@@ -30,7 +30,7 @@ data class Receipt(
         onDelete = ForeignKey.CASCADE)],
     indices = [Index(value = ["receiptId"])]
 )
-data class ImageData(
+data class Image(
     @PrimaryKey @ColumnInfo(name = "id") val id: String,
     @ColumnInfo(name = "format") val format: String,
     @ColumnInfo(name = "data") val data: ByteArray,
@@ -46,7 +46,7 @@ data class ImageData(
         onDelete = ForeignKey.CASCADE)],
     indices = [Index(value = ["receiptId"])]
 )
-data class ItemData(
+data class Item(
     @PrimaryKey @ColumnInfo(name = "id") val id: String,
     @ColumnInfo(name = "receiptId") val receiptId: String,
     @ColumnInfo(name = "itemName") val itemName: String,
@@ -62,19 +62,19 @@ interface DBDao {
     suspend fun insertReceipt(receipt: Receipt)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertImage(image: ImageData)
+    suspend fun insertImage(image: Image)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertItem(item: ItemData)
+    suspend fun insertItem(item: Item)
 
     @Query("SELECT * FROM receipts")
     suspend fun getAllReceipts(): List<Receipt>
 
     @Query("SELECT * FROM images WHERE receiptId = :receiptId")
-    suspend fun getImagesForReceipt(receiptId: String): List<ImageData>
+    suspend fun getImagesForReceipt(receiptId: String): List<Image>
 
     @Query("SELECT * FROM items WHERE receiptId = :receiptId")
-    suspend fun getItemsForReceipt(receiptId: String): List<ItemData>
+    suspend fun getItemsForReceipt(receiptId: String): List<Item>
 
     // For FilterReceiptsActivity
     @Query("SELECT * FROM receipts WHERE storeName = :storeName")
@@ -84,10 +84,24 @@ interface DBDao {
     suspend fun getReceiptsByCardNumber(cardNumber: String): List<Receipt>
 
     @Query("SELECT * FROM items WHERE itemName = :itemName")
-    suspend fun getItemsByName(itemName: String): List<ItemData>
+    suspend fun getItemsByName(itemName: String): List<Item>
 }
 
-@Database(entities = [Receipt::class, ImageData::class, ItemData::class], version = 1)
+class Converters {
+    @TypeConverter
+    fun fromTimestamp(value: Long?): Date? {
+        return value?.let { Date(it) }
+    }
+
+    @TypeConverter
+    fun dateToTimestamp(date: Date?): Long? {
+        return date?.time?.toLong()
+    }
+}
+
+
+@Database(entities = [Receipt::class, Image::class, Item::class], version = 1)
+@TypeConverters(Converters::class)
 abstract class DB : RoomDatabase() {
     abstract fun DBDao(): DBDao
 
