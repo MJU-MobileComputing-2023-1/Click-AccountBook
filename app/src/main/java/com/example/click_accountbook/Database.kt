@@ -9,7 +9,7 @@ import java.util.*
 data class Image(
     @PrimaryKey @ColumnInfo(name = "id") val id: String,
     @ColumnInfo(name = "format") val format: String,
-    @ColumnInfo(name = "data") val data: ByteArray,
+    @ColumnInfo(name = "path") val path : String,
     @ColumnInfo(name = "timestamp") val timestamp: Date,
     @ColumnInfo(name = "receiptId") val receiptId: String
 )
