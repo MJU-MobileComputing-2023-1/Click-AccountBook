@@ -1,7 +1,10 @@
+// AddReceiptActivity.kt
 package com.example.click_accountbook
 
 import android.app.Activity
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -10,11 +13,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
 import java.util.*
 
 class AddReceiptActivity : AppCompatActivity() {
-
     private val PICK_IMAGE = 1
     private lateinit var db: DatabaseHandler
 
@@ -37,60 +40,70 @@ class AddReceiptActivity : AppCompatActivity() {
                 val uri = data?.data
 
                 if (uri != null) {
-                    // Get the image data as a ByteArray
                     GlobalScope.launch(Dispatchers.Main) {
-                        val byteArray = withContext(Dispatchers.IO) {
-                            getImageData(uri)
+                        // Get the image data as a Bitmap
+                        val bitmap = withContext(Dispatchers.IO) {
+                            getBitmap(uri)
                         }
 
                         // Generate a new image ID
                         val newImageId = getNextImageId()
 
-                        // Create the image object with the generated ID and the receipt ID
+                        // Generate a new receipt ID
+                        val newReceiptId = getNextReceiptId()
+
+                        // Save the bitmap to internal storage and get the path
+                        val imagePath = withContext(Dispatchers.IO) {
+                            saveBitmap(bitmap, newImageId)
+                        }
+
+                        // Create the image object with the generated ID, the receipt ID, and the image path
                         val image = Image(
                             id = newImageId,
                             format = "jpg",
-                            data = byteArray,
+                            path = imagePath,
                             timestamp = Date(),
-                            receiptId = "" // Replace with the correct receipt ID
+                            receiptId = newReceiptId // Use the new receipt ID
                         )
 
-                        // Insert the image into the database
+                        // Save the image metadata in the database
                         db.insertImage(image)
-
-                        finish()
                     }
                 }
             }
         }
     }
 
-    private suspend fun getImageData(uri: Uri): ByteArray {
-        return withContext(Dispatchers.IO) {
-            val inputStream = contentResolver.openInputStream(uri)
-            val outputStream = ByteArrayOutputStream()
-
-            if (inputStream != null) {
-                val buffer = ByteArray(1024)
-                var bytesRead: Int
-
-                while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-                    outputStream.write(buffer, 0, bytesRead)
-                }
-
-                inputStream.close()
-            }
-
-            outputStream.toByteArray()
-        }
+    private fun getNextImageId(): String {
+        // You can generate an ID however you wish, but it should be unique
+        // For simplicity, we'll just use the current timestamp here
+        return System.currentTimeMillis().toString()
     }
 
-    private suspend fun getNextImageId(): String {
-        return withContext(Dispatchers.IO) {
-            val images = db.getImages()
-            val maxId = images.maxByOrNull { it.id.toIntOrNull() ?: 0 }?.id ?: "-1"
-            val newId = maxId.toInt() + 1
-            newId.toString()
-        }
+    private fun getNextReceiptId(): String {
+        // You can generate an ID however you wish, but it should be unique
+        // For simplicity, we'll just use the current timestamp here
+        return System.currentTimeMillis().toString()
+    }
+
+    private fun getBitmap(uri: Uri): Bitmap {
+        val inputStream = contentResolver.openInputStream(uri)
+        return BitmapFactory.decodeStream(inputStream)
+    }
+
+    private fun saveBitmap(bitmap: Bitmap, imageId: String): String {
+        // Get the internal storage directory
+        val dir = getFilesDir()
+
+        // Create a new file in the directory with the image ID as the name
+        val file = File(dir, "$imageId.jpg")
+
+        // Write the bitmap data to the file
+        val outputStream = FileOutputStream(file)
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+        outputStream.close()
+
+        // Return the path to the file
+        return file.absolutePath
     }
 }
