@@ -1,13 +1,21 @@
 package com.example.click_accountbook.ui.home
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
+import com.example.click_accountbook.DBDao
+import androidx.lifecycle.*
+import com.example.click_accountbook.Receipt
+import kotlinx.coroutines.launch
 
-class GalleryViewModel : ViewModel() {
+class GalleryViewModel(private val dbDao: DBDao) : ViewModel() {
 
-    private val _text = MutableLiveData<String>().apply {
-        value = "This is gallery Fragment"
+    private val _receipts = MutableLiveData<List<Receipt>>()
+    val receipts: LiveData<List<Receipt>> get() = _receipts
+
+    init {
+        getReceipts()
     }
-    val text: LiveData<String> = _text
+
+    private fun getReceipts() = viewModelScope.launch {
+        _receipts.value = dbDao.getAllReceipts()
+    }
 }
+

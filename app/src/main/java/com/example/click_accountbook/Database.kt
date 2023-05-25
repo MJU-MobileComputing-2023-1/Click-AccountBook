@@ -1,6 +1,18 @@
+package com.example.click_accountbook
+
 import android.content.Context
 import androidx.room.*
 import java.util.*
+
+// Image Table
+@Entity(tableName = "images")
+data class Image(
+    @PrimaryKey @ColumnInfo(name = "id") val id: String,
+    @ColumnInfo(name = "format") val format: String,
+    @ColumnInfo(name = "data") val data: ByteArray,
+    @ColumnInfo(name = "timestamp") val timestamp: Date,
+    @ColumnInfo(name = "receiptId") val receiptId: String
+)
 
 // Receipt Table
 @Entity(tableName = "receipts",
@@ -19,26 +31,11 @@ data class Receipt(
     @ColumnInfo(name = "paymentCardNumber") val paymentCardNumber: String?,
     @ColumnInfo(name = "paymentConfirmNum") val paymentConfirmNum: String?,
     @ColumnInfo(name = "totalPrice") val totalPrice: Float,
-    @ColumnInfo(name = "estimatedLanguage") val estimatedLanguage: String
+    @ColumnInfo(name = "estimatedLanguage") val estimatedLanguage: String,
+    @ColumnInfo(name = "imageId") val imageId: String? // Added imageId field to reference Image table
 )
 
-// ImageDataTable
-@Entity(tableName = "images",
-    foreignKeys = [ForeignKey(entity = Receipt::class,
-        parentColumns = arrayOf("id"),
-        childColumns = arrayOf("receiptId"),
-        onDelete = ForeignKey.CASCADE)],
-    indices = [Index(value = ["receiptId"])]
-)
-data class Image(
-    @PrimaryKey @ColumnInfo(name = "id") val id: String,
-    @ColumnInfo(name = "format") val format: String,
-    @ColumnInfo(name = "data") val data: ByteArray,
-    @ColumnInfo(name = "timestamp") val timestamp: Date,
-    @ColumnInfo(name = "receiptId") val receiptId: String
-)
-
-// ItemDataTable
+// Item Table
 @Entity(tableName = "items",
     foreignKeys = [ForeignKey(entity = Receipt::class,
         parentColumns = arrayOf("id"),
@@ -70,6 +67,9 @@ interface DBDao {
     @Query("SELECT * FROM receipts")
     suspend fun getAllReceipts(): List<Receipt>
 
+    @Query("SELECT * FROM images")
+    suspend fun getImages(): List<Image>
+
     @Query("SELECT * FROM images WHERE receiptId = :receiptId")
     suspend fun getImagesForReceipt(receiptId: String): List<Image>
 
@@ -99,26 +99,28 @@ class Converters {
     }
 }
 
-
-@Database(entities = [Receipt::class, Image::class, Item::class], version = 1)
+@Database(entities = [Image::class, Receipt::class, Item::class], version = 1)
 @TypeConverters(Converters::class)
 abstract class DB : RoomDatabase() {
     abstract fun DBDao(): DBDao
 
     companion object {
-        // Singleton prevents multiple instances of database opening at the same time.
         @Volatile
         private var INSTANCE: DB? = null
 
         fun getDatabase(context: Context): DB {
-            return INSTANCE ?: synchronized(this) {
+            val tempInstance = INSTANCE
+            if (tempInstance != null) {
+                return tempInstance
+            }
+            synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     DB::class.java,
                     "receipt_database"
                 ).build()
                 INSTANCE = instance
-                instance
+                return instance
             }
         }
     }
