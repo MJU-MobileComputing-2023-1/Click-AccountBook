@@ -1,13 +1,17 @@
 package com.example.click_accountbook
 
 // DatabaseHandler.kt
-import Image
-import Item
-import Receipt
 import android.content.Context
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import com.example.click_accountbook.DB
+import com.example.click_accountbook.Receipt
+import com.example.click_accountbook.Image
+import com.example.click_accountbook.Item
+import kotlinx.coroutines.withContext
+
+
 import java.util.*
 
 class DatabaseHandler(context: Context) {
@@ -17,7 +21,23 @@ class DatabaseHandler(context: Context) {
     // Insert operations
     fun insertReceipt(receipt: Receipt) {
         CoroutineScope(Dispatchers.IO).launch {
-            dbDao.insertReceipt(receipt)
+            // Generate a new receipt ID
+            val newReceiptId = getNextReceiptId()
+
+            // Assign the generated ID to the receipt object
+            val receiptWithId = receipt.copy(id = newReceiptId)
+
+            // Insert the receipt with the assigned ID into the database
+            dbDao.insertReceipt(receiptWithId)
+        }
+    }
+
+    private suspend fun getNextReceiptId(): String {
+        return withContext(Dispatchers.IO) {
+            val receipts = dbDao.getAllReceipts()
+            val maxId = receipts.maxByOrNull { it.id.toIntOrNull() ?: 0 }?.id ?: "-1"
+            val newId = maxId.toInt() + 1
+            newId.toString()
         }
     }
 
@@ -46,6 +66,10 @@ class DatabaseHandler(context: Context) {
         return dbDao.getItemsForReceipt(receiptId)
     }
 
+    suspend fun getImages(): List<Image> {
+        return dbDao.getImages()
+    }
+
     // Filter operations
     suspend fun getReceiptsByStore(storeName: String): List<Receipt> {
         return dbDao.getReceiptsByStore(storeName)
@@ -59,3 +83,4 @@ class DatabaseHandler(context: Context) {
         return dbDao.getItemsByName(itemName)
     }
 }
+
