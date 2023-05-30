@@ -20,12 +20,14 @@ import java.util.*
 class AddReceiptActivity : AppCompatActivity() {
     private val PICK_IMAGE = 1
     private lateinit var db: DatabaseHandler
+    private lateinit var ocr: NaverClovaOCR
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.add_receipt_activity)
 
         db = DatabaseHandler(this)
+        ocr = NaverClovaOCR()
 
         // Start the image picker
         val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
@@ -49,9 +51,6 @@ class AddReceiptActivity : AppCompatActivity() {
                         // Generate a new image ID
                         val newImageId = getNextImageId()
 
-                        // Generate a new receipt ID
-                        val newReceiptId = getNextReceiptId()
-
                         // Save the bitmap to internal storage and get the path
                         val imagePath = withContext(Dispatchers.IO) {
                             saveBitmap(bitmap, newImageId)
@@ -63,24 +62,44 @@ class AddReceiptActivity : AppCompatActivity() {
                             format = "jpg",
                             path = imagePath,
                             timestamp = Date(),
-                            receiptId = newReceiptId // Use the new receipt ID
+                            receiptId = "" // Placeholder, will be set by NaverClovaOCR
                         )
 
                         // Save the image metadata in the database
                         db.insertImage(image)
+
+                        // Convert the Bitmap to File
+                        val imageFile = bitmapToFile(bitmap, newImageId)
+
+                        // Perform OCR on the image file
+                        val ocrResult = ocr.performOCR(imageFile)
+
+                        // Update the image's receipt ID with the one extracted from OCR result
+                        val receiptId = extractReceiptIdFromOCRResult(ocrResult)
+                        image.receiptId = receiptId
+                        db.updateImage(image)
+
+                        // Insert the receipt info into the database
+                        db.insertReceipt(image, this@AddReceiptActivity)
+
+                        // Finish the AddReceiptActivity
+                        finish()
                     }
                 }
             }
         }
     }
 
-    private fun getNextImageId(): String {
-        // You can generate an ID however you wish, but it should be unique
-        // For simplicity, we'll just use the current timestamp here
-        return System.currentTimeMillis().toString()
+    private fun bitmapToFile(bitmap: Bitmap, imageId: String): File {
+        val dir = filesDir
+        val file = File(dir, "$imageId.jpg")
+        val outputStream = FileOutputStream(file)
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+        outputStream.close()
+        return file
     }
 
-    private fun getNextReceiptId(): String {
+    private fun getNextImageId(): String {
         // You can generate an ID however you wish, but it should be unique
         // For simplicity, we'll just use the current timestamp here
         return System.currentTimeMillis().toString()
@@ -93,7 +112,7 @@ class AddReceiptActivity : AppCompatActivity() {
 
     private fun saveBitmap(bitmap: Bitmap, imageId: String): String {
         // Get the internal storage directory
-        val dir = getFilesDir()
+        val dir = filesDir
 
         // Create a new file in the directory with the image ID as the name
         val file = File(dir, "$imageId.jpg")
@@ -105,5 +124,12 @@ class AddReceiptActivity : AppCompatActivity() {
 
         // Return the path to the file
         return file.absolutePath
+    }
+
+    private fun extractReceiptIdFromOCRResult(ocrResult: String): String {
+        // Extract the receipt ID from the OCR result
+        // Implement your logic here based on the structure of the OCR result
+        // Return the extracted receipt ID
+        return ""
     }
 }
