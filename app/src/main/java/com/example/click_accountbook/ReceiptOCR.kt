@@ -14,8 +14,10 @@ data class ReceiptInfo(
     val cardCompany: String?,
     val cardNumber: String?,
     val confirmNum: String?,
-    val totalPrice: Float
+    val totalPrice: Float,
 )
+
+
 
 class ReceiptOCR {
     fun parseReceipt(ocrResult: String): ReceiptInfo {
@@ -32,39 +34,51 @@ class ReceiptOCR {
         var confirmNum = "Unknown Confirmation Number"
         var totalPrice = 0.0F
 
+
         // Parse the OCR result and extract the required fields
         val jsonObject = JSONObject(ocrResult)
         val imagesArray = jsonObject.getJSONArray("images")
-        val receiptObject = imagesArray.getJSONObject(0).getJSONObject("receipt").getJSONObject("result")
+        val receiptObject =
+            imagesArray.getJSONObject(0).getJSONObject("receipt").getJSONObject("result")
 
-        if(receiptObject.has("storeInfo")) {
+        if (receiptObject.has("storeInfo")) {
             val storeInfoObject = receiptObject.getJSONObject("storeInfo")
-            if(storeInfoObject.has("name"))
+            if (storeInfoObject.has("name"))
                 storeName = storeInfoObject.getJSONObject("name").getString("text")
-            if(storeInfoObject.has("bizNum"))
+            if (storeInfoObject.has("bizNum"))
                 bizNum = storeInfoObject.getJSONObject("bizNum").getString("text")
-            if(storeInfoObject.has("addresses"))
-                address = storeInfoObject.getJSONArray("addresses").getJSONObject(0).getString("text")
-            if(storeInfoObject.has("tel"))
+            if (storeInfoObject.has("addresses"))
+                address =
+                    storeInfoObject.getJSONArray("addresses").getJSONObject(0).getString("text")
+            if (storeInfoObject.has("tel"))
                 tel = storeInfoObject.getJSONArray("tel").getJSONObject(0).getString("text")
         }
 
-        if(receiptObject.has("paymentInfo")) {
+        if (receiptObject.has("paymentInfo")) {
             val paymentInfoObject = receiptObject.getJSONObject("paymentInfo")
-            if(paymentInfoObject.has("date"))
+            if (paymentInfoObject.has("date"))
                 date = paymentInfoObject.getJSONObject("date").getString("text")
-            if(paymentInfoObject.has("time"))
+            if (paymentInfoObject.has("time"))
                 time = paymentInfoObject.getJSONObject("time").getString("text")
-            if(paymentInfoObject.has("cardInfo")) {
+            if (paymentInfoObject.has("cardInfo")) {
                 val cardInfoObject = paymentInfoObject.getJSONObject("cardInfo")
-                if(cardInfoObject.has("company"))
+                if (cardInfoObject.has("company"))
                     cardCompany = cardInfoObject.getJSONObject("company").getString("text")
-                if(cardInfoObject.has("number"))
+                if (cardInfoObject.has("number"))
                     cardNumber = cardInfoObject.getJSONObject("number").getString("text")
             }
-            if(paymentInfoObject.has("confirmNum"))
+            if (paymentInfoObject.has("confirmNum"))
                 confirmNum = paymentInfoObject.getString("confirmNum")
         }
+        if (receiptObject.has("totalPrice")) {
+            val totalPriceObject = receiptObject.getJSONObject("totalPrice")
+            if (totalPriceObject.has("price")) {
+                val priceString = totalPriceObject.getJSONObject("price").getString("text")
+                val priceWithoutComma = priceString.replace(",", "")
+                totalPrice = priceWithoutComma.toDouble().toFloat()
+            }
+        }
+
 
         return ReceiptInfo(
             storeName = storeName,
@@ -81,7 +95,6 @@ class ReceiptOCR {
         )
     }
 
-
     fun parseItems(itemsJsonArray: JSONArray?): List<Item> {
         val items = mutableListOf<Item>()
 
@@ -89,15 +102,21 @@ class ReceiptOCR {
             for (i in 0 until itemsJsonArray.length()) {
                 val itemObject = itemsJsonArray.getJSONObject(i)
 
-                val name = if (itemObject.has("name")) itemObject.getString("name") else "Unknown Name"
-                val code = if (itemObject.has("code")) itemObject.getString("code") else "Unknown Code"
-                val count = if (itemObject.has("count")) itemObject.getDouble("count").toFloat() else 0.0F
+                val name =
+                    if (itemObject.has("name")) itemObject.getString("name") else "Unknown Name IN"
+                val code =
+                    if (itemObject.has("code")) itemObject.getString("code") else "Unknown Code IN"
+                val count =
+                    if (itemObject.has("count")) itemObject.getDouble("count").toFloat() else 0.0F
                 var price = 0.0F
                 var unitPrice = 0.0F
-                if (itemObject.has("price")) {
-                    val priceObject = itemObject.getJSONObject("price")
-                    price = if (priceObject.has("price")) priceObject.getDouble("price").toFloat() else 0.0F
-                    unitPrice = if (priceObject.has("unitPrice")) priceObject.getDouble("unitPrice").toFloat() else 0.0F
+                if (itemObject.has("priceInfo")) {
+                    val priceInfoObject = itemObject.getJSONObject("priceInfo")
+                    price = if (priceInfoObject.has("price")) priceInfoObject.getDouble("price")
+                        .toFloat() else 0.0F
+                    unitPrice =
+                        if (priceInfoObject.has("unitPrice")) priceInfoObject.getDouble("unitPrice")
+                            .toFloat() else 0.0F
                 }
 
                 val item = Item(
@@ -128,5 +147,4 @@ class ReceiptOCR {
 
         return items
     }
-
 }
