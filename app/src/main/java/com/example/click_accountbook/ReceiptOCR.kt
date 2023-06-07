@@ -1,5 +1,6 @@
 package com.example.click_accountbook
 
+import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -14,8 +15,19 @@ data class ReceiptInfo(
     val cardCompany: String?,
     val cardNumber: String?,
     val confirmNum: String?,
-    val totalPrice: Float
+    val totalPrice: Float,
 )
+data class ItemInfo(
+    val id : String, // Generate a new item ID
+    val receiptId : String,
+    val itemName: String,
+    val itemCode: String,
+    val itemCount: Float?,
+    val itemPrice: Float?,
+    val itemUnitPrice: Float?
+)
+
+
 
 class ReceiptOCR {
     fun parseReceipt(ocrResult: String): ReceiptInfo {
@@ -32,39 +44,53 @@ class ReceiptOCR {
         var confirmNum = "Unknown Confirmation Number"
         var totalPrice = 0.0F
 
+
         // Parse the OCR result and extract the required fields
         val jsonObject = JSONObject(ocrResult)
         val imagesArray = jsonObject.getJSONArray("images")
-        val receiptObject = imagesArray.getJSONObject(0).getJSONObject("receipt").getJSONObject("result")
+        val receiptObject =
+            imagesArray.getJSONObject(0).getJSONObject("receipt").getJSONObject("result")
 
-        if(receiptObject.has("storeInfo")) {
+        if (receiptObject.has("storeInfo")) {
             val storeInfoObject = receiptObject.getJSONObject("storeInfo")
-            if(storeInfoObject.has("name"))
+
+            if (storeInfoObject.has("name"))
                 storeName = storeInfoObject.getJSONObject("name").getString("text")
-            if(storeInfoObject.has("bizNum"))
+            if (storeInfoObject.has("bizNum"))
                 bizNum = storeInfoObject.getJSONObject("bizNum").getString("text")
-            if(storeInfoObject.has("addresses"))
-                address = storeInfoObject.getJSONArray("addresses").getJSONObject(0).getString("text")
-            if(storeInfoObject.has("tel"))
+            if (storeInfoObject.has("addresses"))
+                address =
+                    storeInfoObject.getJSONArray("addresses").getJSONObject(0).getString("text")
+            if (storeInfoObject.has("tel"))
                 tel = storeInfoObject.getJSONArray("tel").getJSONObject(0).getString("text")
         }
 
-        if(receiptObject.has("paymentInfo")) {
+        if (receiptObject.has("paymentInfo")) {
             val paymentInfoObject = receiptObject.getJSONObject("paymentInfo")
-            if(paymentInfoObject.has("date"))
+            if (paymentInfoObject.has("date"))
                 date = paymentInfoObject.getJSONObject("date").getString("text")
-            if(paymentInfoObject.has("time"))
+            if (paymentInfoObject.has("time"))
                 time = paymentInfoObject.getJSONObject("time").getString("text")
-            if(paymentInfoObject.has("cardInfo")) {
+            if (paymentInfoObject.has("cardInfo")) {
                 val cardInfoObject = paymentInfoObject.getJSONObject("cardInfo")
-                if(cardInfoObject.has("company"))
+                if (cardInfoObject.has("company"))
                     cardCompany = cardInfoObject.getJSONObject("company").getString("text")
-                if(cardInfoObject.has("number"))
+                if (cardInfoObject.has("number"))
                     cardNumber = cardInfoObject.getJSONObject("number").getString("text")
             }
-            if(paymentInfoObject.has("confirmNum"))
+            if (paymentInfoObject.has("confirmNum"))
                 confirmNum = paymentInfoObject.getString("confirmNum")
         }
+        if (receiptObject.has("totalPrice")) {
+            val totalPriceObject = receiptObject.getJSONObject("totalPrice")
+            if (totalPriceObject.has("price")) {
+                val priceObject = totalPriceObject.getJSONObject("price")
+                if (priceObject.has("formatted")) {
+                    totalPrice = priceObject.getJSONObject("formatted").getDouble("value").toFloat()
+                }
+            }
+        }
+
 
         return ReceiptInfo(
             storeName = storeName,
@@ -81,52 +107,67 @@ class ReceiptOCR {
         )
     }
 
+    fun parseItems(ocrResult: String): ItemInfo {
+        var id = "Unknown name"
+        var receiptId = "Unknown name"
+        var itemName = "Unknown name"
+        var itemCode = "Unknown code"
+        var itemCount = 0.0F
+        var itemPrice = 0.0F
+        var itemUnitPrice = 0.0F
 
-    fun parseItems(itemsJsonArray: JSONArray?): List<Item> {
-        val items = mutableListOf<Item>()
+        val jsonObject = JSONObject(ocrResult)
+        val imagesArray = jsonObject.getJSONArray("images")
+        val receiptObject =
+            imagesArray.getJSONObject(0).getJSONObject("receipt").getJSONObject("result")
+        Log.d("receiptObject", "Item Name: ${receiptObject}")
 
-        if (itemsJsonArray != null && itemsJsonArray.length() > 0) {
-            for (i in 0 until itemsJsonArray.length()) {
-                val itemObject = itemsJsonArray.getJSONObject(i)
-
-                val name = if (itemObject.has("name")) itemObject.getString("name") else "Unknown Name"
-                val code = if (itemObject.has("code")) itemObject.getString("code") else "Unknown Code"
-                val count = if (itemObject.has("count")) itemObject.getDouble("count").toFloat() else 0.0F
-                var price = 0.0F
-                var unitPrice = 0.0F
-                if (itemObject.has("price")) {
-                    val priceObject = itemObject.getJSONObject("price")
-                    price = if (priceObject.has("price")) priceObject.getDouble("price").toFloat() else 0.0F
-                    unitPrice = if (priceObject.has("unitPrice")) priceObject.getDouble("unitPrice").toFloat() else 0.0F
+        if (receiptObject.has("subResults")) {
+            val subResultsArray = receiptObject.getJSONArray("subResults")
+            if (subResultsArray.length() > 0) {
+                val subResultObject = subResultsArray.getJSONObject(0)
+                if (subResultObject.has("items")) {
+                    val itemsArray = subResultObject.getJSONArray("items")
+                    if (itemsArray.length() > 0) {
+                        val itemObject = itemsArray.getJSONObject(0)
+                        if (itemObject.has("name"))
+                            itemName = itemObject.getJSONObject("name").getString("text")
+                        if (itemObject.has("code"))
+                            itemCode = itemObject.getJSONObject("code").getString("text")
+                        if (itemObject.has("count")) {
+                            itemCount = itemObject.getJSONObject("count").getDouble("text")
+                                .toFloat()
+                        }
+                        if (itemObject.has("price")) {
+                            val priceInfoObject = itemObject.getJSONObject("price")
+                            if (priceInfoObject.has("price")) {
+                                val priceObject = priceInfoObject.getJSONObject("price")
+                                if (priceObject.has("formatted")) {
+                                    itemPrice = priceObject.getJSONObject("formatted")
+                                        .getDouble("value").toFloat()
+                                }
+                            }
+                            if (priceInfoObject.has("unitPrice")) {
+                                val priceObject = priceInfoObject.getJSONObject("unitPrice")
+                                if (priceObject.has("formatted")) {
+                                    itemUnitPrice = priceObject.getJSONObject("formatted")
+                                        .getDouble("value").toFloat()
+                                }
+                            }
+                        }
+                    }
                 }
-
-                val item = Item(
-                    id = "", // Generate a new item ID
-                    receiptId = "", // Use the receipt ID
-                    itemName = name,
-                    itemCode = code,
-                    itemCount = count,
-                    itemPrice = price,
-                    itemUnitPrice = unitPrice
-                )
-
-                items.add(item)
             }
-        } else {
-            // Add a default item when itemsJsonArray is null or empty
-            val defaultItem = Item(
-                id = "", // Generate a new item ID
-                receiptId = "", // Use the receipt ID
-                itemName = "Unknown Name",
-                itemCode = "Unknown Code",
-                itemCount = 0.0F,
-                itemPrice = 0.0F,
-                itemUnitPrice = 0.0F
-            )
-            items.add(defaultItem)
         }
 
-        return items
+        return ItemInfo(
+            id = "", // Generate a new item ID
+            receiptId = "",
+            itemName = itemName,
+            itemCode = itemCode,
+            itemCount = itemCount,
+            itemPrice = itemPrice,
+            itemUnitPrice = itemUnitPrice
+        )
     }
-
 }

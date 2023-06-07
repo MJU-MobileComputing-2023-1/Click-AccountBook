@@ -3,6 +3,7 @@ package com.example.click_accountbook
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -50,50 +51,31 @@ class DatabaseHandler(context: Context) {
                 totalPrice = receiptInfo.totalPrice,
                 estimatedLanguage = ""
             )
+            Log.d("newReceipt", "Item Name: ${newReceipt}")
+
 
             // Insert the new Receipt into the database
             dbDao.insertReceipt(newReceipt)
 
-            // Parse and insert items
-            val jsonObject = JSONObject(ocrResult)
-            if(jsonObject.has("items")) {
-                val itemsJsonArray = jsonObject.getJSONArray("items")
-                val items = receiptOcr.parseItems(itemsJsonArray)
-                for (item in items) {
-                    // Generate a new item ID
-                    val newItemId = getNextItemId()
+            val itemInfo = receiptOcr.parseItems(ocrResult)
 
-                    // Create new Item object and insert it
-                    val newItem = Item(
-                        newItemId,
-                        newReceiptId,
-                        item.itemName,
-                        item.itemCode,
-                        item.itemCount,
-                        item.itemPrice,
-                        item.itemUnitPrice
-                    )
-                    insertItem(newItem)
-                }
-            } else {
-                val items = receiptOcr.parseItems(null)
-                for (item in items) {
-                    // Generate a new item ID
-                    val newItemId = getNextItemId()
+            // Generate a new item ID
+            val newItemId = getNextItemId()
 
-                    // Create new Item object and insert it
-                    val newItem = Item(
-                        newItemId,
-                        newReceiptId,
-                        item.itemName,
-                        item.itemCode,
-                        item.itemCount,
-                        item.itemPrice,
-                        item.itemUnitPrice
-                    )
-                    insertItem(newItem)
-                }
-            }
+            // Create a new Receipt object with the information from the ReceiptInfo object
+            val newItem = Item(
+                id = newItemId, // Generate a new item ID
+                receiptId = newReceiptId, // Use newReceiptId instead of newItemId
+                itemName = itemInfo.itemName,
+                itemCode = itemInfo.itemCode,
+                itemCount = itemInfo.itemCount,
+                itemPrice = itemInfo.itemPrice,
+                itemUnitPrice = itemInfo.itemUnitPrice
+            )
+            Log.d("newItem", "Item Name: ${newItem}")
+
+            // Insert the new Receipt into the database
+            insertItem(newItem)
         }
     }
 

@@ -91,7 +91,8 @@
 
         @Update
         suspend fun updateImage(image: Image)
-
+        
+        main
         @Query("SELECT * FROM images WHERE id = :imageId")
         suspend fun getImage(imageId: String): Image
     }
