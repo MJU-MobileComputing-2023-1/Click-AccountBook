@@ -23,7 +23,9 @@ class StatisticsViewModel(private val dbHandler: DatabaseHandler) : ViewModel() 
 
     // Create LiveData for List<Entry> for the LineChart
     private val _lineData = MutableLiveData<List<Entry>>()
-    val lineData: LiveData<List<Entry>> = _lineData
+    val lineData: LiveData<List<Entry>> get() = _lineData
+    private val _dates = MutableLiveData<List<Date>>()
+    val dates: LiveData<List<Date>> get() = _dates
 
     init {
         loadData()
@@ -34,32 +36,44 @@ class StatisticsViewModel(private val dbHandler: DatabaseHandler) : ViewModel() 
             val receiptList = dbHandler.getAllReceipts()
             Log.d("StatisticsViewModel", "Loaded receipt list size: ${receiptList.size}")
             val receiptDataList = receiptList.map {
-                val formattedPaymentDate = it.paymentDate.replace(".", ". ")
+                val formattedPaymentDate = it.paymentDate.replace("-", ". ").replace(".", ". ")
                 ReceiptData(formattedPaymentDate, it.totalPrice)
             }
             _receiptData.value = receiptDataList
 
-            val lineDataList = receiptDataList.mapNotNull {
-                try {
-                    val date = SimpleDateFormat("yyyy. MM.dd", Locale.getDefault()).parse(it.paymentDate)
+            // Create a list of dates from the receipt data
+            val datesList = _receiptData.value?.mapNotNull { receiptData ->
+                tryParseDate(receiptData.paymentDate)?.also { date ->
                     Log.d("StatisticsViewModel", "Parsed date in milliseconds: ${date.time}")
-                    val entry = Entry(date.time.toFloat(), it.totalPrice)
                     Log.d(
                         "StatisticsViewModel",
-                        "Line chart entry: Date: ${date}, Total Price: ${it.totalPrice}"
+                        "Line chart entry: Date: $date, Total Price: ${receiptData.totalPrice}"
                     )
-                    entry
-                } catch (e: ParseException) {
-                    // Invalid date format, skip this entry
-                    Log.e(
-                        "StatisticsViewModel", "Invalid date format: ${it.paymentDate}"
-                    ) //unknown으로 인식되면 예외 처리로 다음 값들로 넘어가게 함
-                    // .
-
-                    null
                 }
+            } ?: emptyList()
+
+            _dates.value = datesList
+
+            // Replace date.time with index.toFloat()
+            val lineDataList = datesList.indices.map { index ->
+                Entry(index.toFloat(), _receiptData.value?.get(index)?.totalPrice ?: 0f)
             }
             _lineData.value = lineDataList
         }
     }
+
+
+    private fun tryParseDate(dateString: String): Date? {
+        val formats = listOf("yyyy. MM. dd", "yyyy.MM.dd", "yyyy-MM-dd")
+
+        for (format in formats) {
+            try {
+                return SimpleDateFormat(format, Locale.getDefault()).parse(dateString)
+            } catch (e: ParseException) {
+            }
+        }
+
+        return null
+    }
 }
+

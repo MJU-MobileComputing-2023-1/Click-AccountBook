@@ -74,7 +74,7 @@ class ReceiptOCR {
             val totalPriceObject = receiptObject.getJSONObject("totalPrice")
             if (totalPriceObject.has("price")) {
                 val priceString = totalPriceObject.getJSONObject("price").getString("text")
-                val priceWithoutComma = priceString.replace(",", "")
+                val priceWithoutComma = priceString.replace("₩", "").replace(",", "")
                 totalPrice = priceWithoutComma.toDouble().toFloat()
             }
         }
