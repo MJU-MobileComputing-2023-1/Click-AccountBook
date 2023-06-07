@@ -25,11 +25,6 @@
             android:name=".AddReceiptActivity"
             android:label="Add Receipt">
         </activity>
-        <activity
-            android:name=".StatisticsActivity"
-            android:parentActivityName=".MainActivity"
-            android:exported="true">
-        </activity>
 
     </application>
 
