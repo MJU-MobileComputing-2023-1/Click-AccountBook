@@ -57,25 +57,24 @@ class DatabaseHandler(context: Context) {
             // Insert the new Receipt into the database
             dbDao.insertReceipt(newReceipt)
 
-            val itemInfo = receiptOcr.parseItems(ocrResult)
+            val items = receiptOcr.parseItems(ocrResult)
 
-            // Generate a new item ID
-            val newItemId = getNextItemId()
-
-            // Create a new Receipt object with the information from the ReceiptInfo object
-            val newItem = Item(
-                id = newItemId, // Generate a new item ID
-                receiptId = newReceiptId, // Use newReceiptId instead of newItemId
-                itemName = itemInfo.itemName,
-                itemCode = itemInfo.itemCode,
-                itemCount = itemInfo.itemCount,
-                itemPrice = itemInfo.itemPrice,
-                itemUnitPrice = itemInfo.itemUnitPrice
-            )
-            Log.d("newItem", "Item Name: ${newItem}")
-
-            // Insert the new Receipt into the database
-            insertItem(newItem)
+            val itemList = mutableListOf<Item>()
+            for (itemInfo in items) {
+                val newItem = Item(
+                    id = itemInfo.id, // Set the item ID
+                    receiptId = newReceiptId, // Set the receipt ID
+                    itemName = itemInfo.itemName,
+                    itemCode = itemInfo.itemCode,
+                    itemCount = itemInfo.itemCount,
+                    itemPrice = itemInfo.itemPrice,
+                    itemUnitPrice = itemInfo.itemUnitPrice
+                )
+                itemList.add(newItem)
+                Log.d("newItem", "Item Name: $newItem")
+            }
+            // Insert the new Items into the database
+            insertItems(itemList)
         }
     }
 
@@ -112,9 +111,10 @@ class DatabaseHandler(context: Context) {
     private suspend fun getNextItemId(): String {
         return withContext(Dispatchers.IO) {
             val items = dbDao.getAllItems()
-            val maxId = items.maxByOrNull { it.id.toIntOrNull() ?: 0 }?.id ?: "-1"
+            var maxId = items.maxByOrNull { it.id.toIntOrNull() ?: 0 }?.id ?: "0"
             val newId = maxId.toInt() + 1
-            newId.toString()
+            maxId = newId.toString()
+            maxId
         }
     }
 
@@ -124,10 +124,11 @@ class DatabaseHandler(context: Context) {
         }
     }
 
-    fun insertItem(item: Item) {
+    private fun insertItems(items: List<Item>) {
         CoroutineScope(Dispatchers.IO).launch {
-            withContext(Dispatchers.Main) {
-                dbDao.insertItem(item)
+            for (item in items) {
+                val insertedId = dbDao.insertItem(item)
+                Log.d("Database", "Inserted item with ID: $insertedId")
             }
         }
     }
