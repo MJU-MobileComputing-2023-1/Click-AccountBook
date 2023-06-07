@@ -78,14 +78,11 @@ class GalleryFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         // Reload the receipts when the fragment resumes
-        loadReceipts()
         GlobalScope.launch(Dispatchers.IO) {
             val receipts = db.getAllReceipts()
             withContext(Dispatchers.Main) {
                 adapter.updateReceipts(receipts)
             }
         }
-
     }
 }
-

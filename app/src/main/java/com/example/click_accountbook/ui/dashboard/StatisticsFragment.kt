@@ -49,17 +49,20 @@ class StatisticsFragment : Fragment() {
             xAxis.valueFormatter = object : ValueFormatter() {
                 private val dateFormat = SimpleDateFormat("yyyy. MM.dd", Locale.getDefault())
 
+
                 override fun getAxisLabel(value: Float, axis: AxisBase): String {
-                    val millis = value.toLong() * 24 * 60 * 60 * 1000
-                    return dateFormat.format(Date(millis))
+                    val millis = value.toLong()
+                    return dateFormat.format(Date(millis))   // 수정된 부분: 문자열 날짜를 반환합니다.
                 }
             }
-            // Setting the LineData to the LineChart
+            xAxis.setDrawLabels(true) // x축 label보이게 (날짜)
+
             binding.lineChart.data = lineData
 
             // Refresh the chart
             binding.lineChart.invalidate()
         })
+
 
         return binding.root
     }

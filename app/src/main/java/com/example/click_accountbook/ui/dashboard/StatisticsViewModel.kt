@@ -33,13 +33,15 @@ class StatisticsViewModel(private val dbHandler: DatabaseHandler) : ViewModel() 
         viewModelScope.launch {
             val receiptList = dbHandler.getAllReceipts()
             Log.d("StatisticsViewModel", "Loaded receipt list size: ${receiptList.size}")
-            val receiptDataList = receiptList.map { ReceiptData(it.paymentDate, it.totalPrice) }
+            val receiptDataList = receiptList.map {
+                val formattedPaymentDate = it.paymentDate.replace(".", ". ")
+                ReceiptData(formattedPaymentDate, it.totalPrice)
+            }
             _receiptData.value = receiptDataList
 
             val lineDataList = receiptDataList.mapNotNull {
                 try {
-                    val date =
-                        SimpleDateFormat("yyyy. MM.dd", Locale.getDefault()).parse(it.paymentDate)
+                    val date = SimpleDateFormat("yyyy. MM.dd", Locale.getDefault()).parse(it.paymentDate)
                     Log.d("StatisticsViewModel", "Parsed date in milliseconds: ${date.time}")
                     val entry = Entry(date.time.toFloat(), it.totalPrice)
                     Log.d(
@@ -50,9 +52,10 @@ class StatisticsViewModel(private val dbHandler: DatabaseHandler) : ViewModel() 
                 } catch (e: ParseException) {
                     // Invalid date format, skip this entry
                     Log.e(
-                        "StatisticsViewModel",
-                        "Invalid date format: ${it.paymentDate}"
-                    ) //unknown으로 인식되면 예외 처리로 다음 값들로 넘어가게 함 .
+                        "StatisticsViewModel", "Invalid date format: ${it.paymentDate}"
+                    ) //unknown으로 인식되면 예외 처리로 다음 값들로 넘어가게 함
+                    // .
+
                     null
                 }
             }
