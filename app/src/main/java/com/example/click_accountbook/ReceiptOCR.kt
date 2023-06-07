@@ -3,6 +3,7 @@ package com.example.click_accountbook
 import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
+import java.util.*
 
 data class ReceiptInfo(
     val storeName: String,
@@ -18,7 +19,7 @@ data class ReceiptInfo(
     val totalPrice: Float,
 )
 data class ItemInfo(
-    val id : String, // Generate a new item ID
+    val id: String = UUID.randomUUID().toString(), // Generate a new item ID
     val receiptId : String,
     val itemName: String,
     val itemCode: String,
@@ -107,67 +108,84 @@ class ReceiptOCR {
         )
     }
 
-    fun parseItems(ocrResult: String): ItemInfo {
-        var id = "Unknown name"
-        var receiptId = "Unknown name"
-        var itemName = "Unknown name"
-        var itemCode = "Unknown code"
-        var itemCount = 0.0F
-        var itemPrice = 0.0F
-        var itemUnitPrice = 0.0F
+    fun parseItems(ocrResult: String): List<ItemInfo> {
+        val itemsList = mutableListOf<ItemInfo>()
 
         val jsonObject = JSONObject(ocrResult)
         val imagesArray = jsonObject.getJSONArray("images")
         val receiptObject =
             imagesArray.getJSONObject(0).getJSONObject("receipt").getJSONObject("result")
-        Log.d("receiptObject", "Item Name: ${receiptObject}")
 
         if (receiptObject.has("subResults")) {
             val subResultsArray = receiptObject.getJSONArray("subResults")
-            if (subResultsArray.length() > 0) {
-                val subResultObject = subResultsArray.getJSONObject(0)
+            for (i in 0 until subResultsArray.length()) {
+                val subResultObject = subResultsArray.getJSONObject(i)
                 if (subResultObject.has("items")) {
                     val itemsArray = subResultObject.getJSONArray("items")
-                    if (itemsArray.length() > 0) {
-                        val itemObject = itemsArray.getJSONObject(0)
-                        if (itemObject.has("name"))
-                            itemName = itemObject.getJSONObject("name").getString("text")
-                        if (itemObject.has("code"))
-                            itemCode = itemObject.getJSONObject("code").getString("text")
-                        if (itemObject.has("count")) {
-                            itemCount = itemObject.getJSONObject("count").getDouble("text")
-                                .toFloat()
+                    for (j in 0 until itemsArray.length()) {
+                        val itemObject = itemsArray.getJSONObject(j)
+                        val itemName = if (itemObject.has("name")) {
+                            itemObject.getJSONObject("name").getString("text")
+                        } else {
+                            "Unknown name"
                         }
-                        if (itemObject.has("price")) {
+                        val itemCode = if (itemObject.has("code")) {
+                            itemObject.getJSONObject("code").getString("text")
+                        } else {
+                            "Unknown code"
+                        }
+                        val itemCount = if (itemObject.has("count")) {
+                            itemObject.getJSONObject("count").getDouble("text").toFloat()
+                        } else {
+                            0.0F
+                        }
+                        val itemPrice = if (itemObject.has("price")) {
                             val priceInfoObject = itemObject.getJSONObject("price")
                             if (priceInfoObject.has("price")) {
                                 val priceObject = priceInfoObject.getJSONObject("price")
                                 if (priceObject.has("formatted")) {
-                                    itemPrice = priceObject.getJSONObject("formatted")
-                                        .getDouble("value").toFloat()
+                                    priceObject.getJSONObject("formatted").getDouble("value").toFloat()
+                                } else {
+                                    0.0F
                                 }
+                            } else {
+                                0.0F
                             }
+                        } else {
+                            0.0F
+                        }
+                        val itemUnitPrice = if (itemObject.has("price")) {
+                            val priceInfoObject = itemObject.getJSONObject("price")
                             if (priceInfoObject.has("unitPrice")) {
                                 val priceObject = priceInfoObject.getJSONObject("unitPrice")
                                 if (priceObject.has("formatted")) {
-                                    itemUnitPrice = priceObject.getJSONObject("formatted")
-                                        .getDouble("value").toFloat()
+                                    priceObject.getJSONObject("formatted").getDouble("value").toFloat()
+                                } else {
+                                    0.0F
                                 }
+                            } else {
+                                0.0F
                             }
+                        } else {
+                            0.0F
                         }
+
+                        val itemInfo = ItemInfo(
+                            id = UUID.randomUUID().toString(), // Generate a new item ID here
+                            receiptId = "",
+                            itemName = itemName,
+                            itemCode = itemCode,
+                            itemCount = itemCount,
+                            itemPrice = itemPrice,
+                            itemUnitPrice = itemUnitPrice
+                        )
+                        itemsList.add(itemInfo)
                     }
                 }
             }
         }
 
-        return ItemInfo(
-            id = "", // Generate a new item ID
-            receiptId = "",
-            itemName = itemName,
-            itemCode = itemCode,
-            itemCount = itemCount,
-            itemPrice = itemPrice,
-            itemUnitPrice = itemUnitPrice
-        )
+        return itemsList
     }
+
 }
