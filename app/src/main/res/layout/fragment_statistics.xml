@@ -17,22 +17,12 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintDimensionRatio="1:0.5"
         app:layout_constraintWidth_percent="0.9">
-        <HorizontalScrollView
-            android:id="@+id/horizontal_scroll_view"
+
+        <com.github.mikephil.charting.charts.LineChart
+            android:id="@+id/line_chart"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:fillViewport="true"
-            android:paddingBottom="5dp"
-            android:scrollbars="horizontal">
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent">
-                <com.github.mikephil.charting.charts.LineChart
-                    android:id="@+id/line_chart"
-                    android:layout_width="1000dp"
-                    android:layout_height="match_parent" />
-            </LinearLayout>
-        </HorizontalScrollView>
+            android:layout_height="match_parent" />
+
     </androidx.cardview.widget.CardView>
 
     <TextView
