@@ -16,71 +16,78 @@
 
 ## 테이블 정의서
 
-1. **Receipt Table**
+1. **Image Table**
 
-   | Column Name        | Data Type | Nullable | Description                                       |
-   | ------------------ | --------- | -------- | ------------------------------------------------- |
-   | id                 | String    | No       | Primary Key                                       |
-   | storeName          | String    | No       | The name of the store where the purchase was made |
-   | storeSubName       | String    | Yes      | The sub name of the store                         |
-   | storeBizNum        | String    | Yes      | The business number of the store                  |
-   | storeAddress       | String    | Yes      | The address of the store                          |
-   | storeTel           | String    | Yes      | The telephone number of the store                 |
-   | paymentDate        | Date      | No       | The date when the payment was made                |
-   | paymentTime        | Date      | No       | The time when the payment was made                |
-   | paymentCardCompany | String    | Yes      | The card company used for the payment             |
-   | paymentCardNumber  | String    | Yes      | The card number used for the payment              |
-   | paymentConfirmNum  | String    | Yes      | The confirmation number of the payment            |
-   | totalPrice         | Float     | No       | The total price of the items purchased            |
-   | estimatedLanguage  | String    | No       | The language estimated by OCR API                 |
+   | Column Name | Data Type | Description                    |
+   | ----------- | --------- | ------------------------------ |
+   | id          | String    | Image의 고유 ID                |
+   | format      | String    | Image의 형식 (ex. jpg, png 등) |
+   | path        | String    | Image의 저장 경로              |
+   | timestamp   | Date      | Image가 생성된 시간            |
+   | receiptId   | String    | 해당 Image가 속한 Receipt의 ID |
 
-2. **ImageData Table**
+2. **Receipt Table**
 
-   | Column Name | Data Type | Nullable | Description                          |
-   | ----------- | --------- | -------- | ------------------------------------ |
-   | id          | String    | No       | Primary Key                          |
-   | format      | String    | No       | The format of the image              |
-   | data        | ByteArray | No       | The actual image data                |
-   | timestamp   | Date      | No       | The time when the image was captured |
-   | receiptId   | String    | No       | Foreign Key referencing Receipt.id   |
+   | Column Name        | Data Type | Description                                 |
+   | ------------------ | --------- | ------------------------------------------- |
+   | id                 | String    | Receipt의 고유 ID                           |
+   | storeName          | String    | 매장 이름                                   |
+   | storeSubName       | String    | 매장 부가 정보 (Nullable)                   |
+   | storeBizNum        | String    | 매장 사업자 번호 (Nullable)                 |
+   | storeAddress       | String    | 매장 주소 (Nullable)                        |
+   | storeTel           | String    | 매장 전화번호 (Nullable)                    |
+   | paymentDate        | String    | 결제 날짜                                   |
+   | paymentTime        | String    | 결제 시간                                   |
+   | paymentCardCompany | String    | 결제 카드 회사 (Nullable)                   |
+   | paymentCardNumber  | String    | 결제 카드 번호 (Nullable)                   |
+   | paymentConfirmNum  | String    | 결제 확인 번호 (Nullable)                   |
+   | totalPrice         | Float     | 총 가격                                     |
+   | estimatedLanguage  | String    | 추정 언어                                   |
+   | imageId            | String    | 해당 Receipt에 연결된 Image의 ID (Nullable) |
 
-3. **ItemData Table**
+3. **Item Table**
 
-   | Column Name   | Data Type | Nullable | Description                           |
-   | ------------- | --------- | -------- | ------------------------------------- |
-   | id            | String    | No       | Primary Key                           |
-   | receiptId     | String    | No       | Foreign Key referencing Receipt.id    |
-   | itemName      | String    | No       | The name of the item                  |
-   | itemCode      | String    | Yes      | The code of the item                  |
-   | itemCount     | Float     | Yes      | The count of the item purchased       |
-   | itemPrice     | Float     | Yes      | The total price of the item purchased |
-   | itemUnitPrice | Float     | Yes      | The unit price of the item            |
+   | Column Name   | Data Type | Description                   |
+   | ------------- | --------- | ----------------------------- |
+   | id            | String    | Item의 고유 ID                |
+   | receiptId     | String    | 해당 Item이 속한 Receipt의 ID |
+   | itemName      | String    | 아이템 이름                   |
+   | itemCode      | String    | 아이템 코드                   |
+   | itemCount     | Float     | 아이템 갯수 (Nullable)        |
+   | itemPrice     | Float     | 아이템 가격 (Nullable)        |
+   | itemUnitPrice | Float     | 아이템 단가 (Nullable)        |
+
 
 
 
 ## ERD
 
 ```lua
-   +-------------+     +--------------+    +-------------+
-   |   Receipt   |     |   ImageData  |    |   ItemData  |
-   +-------------+     +--------------+    +-------------+
-   | id (PK)     |     | id (PK)      |    | id (PK)     |
-   | storeName   |<-|--| receiptId (FK)|<--| receiptId (FK)|
-   | storeSubName|     | format       |    | itemName    |
-   | storeBizNum |     | data         |    | itemCode    |
-   | storeAddress|     | timestamp    |    | itemCount   |
-   | storeTel    |     +--------------+    | itemPrice   |
-   | paymentDate |                         | itemUnitPrice|
-   | paymentTime |                         +--------------+
-   | paymentCardCompany |
-   | paymentCardNumber  |
-   | paymentConfirmNum  |
-   | totalPrice         |
-   | estimatedLanguage  |
-   +--------------------+
+  ┌───────────┐   1    1  ┌───────────┐   1    *   ┌─────────┐
+  │   Image   │ ──────┼── │ Receipts  │ ──────┼──  │  Items  │
+  └───────────┘       └── └───────────┘       └──  └─────────┘
+  │id         │       │   │id         │       │   │id        │
+  │format     │       │   │storeName  │       │   │receiptId │
+  │path       │       │   │storeSubName│      │   │itemName  │
+  │timestamp  │       │   │storeBizNum│       │   │itemCode  │
+  │receiptId  │       └── │storeAddress│      │   │itemCount │
+  └───────────┘           │storeTel   │       │   │itemPrice │
+                          │paymentDate│       │   │itemUnitPrice│
+                          │paymentTime│       │   └──-───────┘
+                          │paymentCardCompany│
+                          │paymentCardNumber │
+                          │paymentConfirmNum │
+                          │totalPrice        │
+                          │estimatedLanguage │
+                          │imageId           │
+                          └──────────────────┘
+
 
 ```
 
+- Image 테이블: 각 이미지는 하나의 영수증에 연결(receiptId)
+- Receipts 테이블: 각 영수증은 하나의 이미지에 연결될 수 있고(imageId), 여러 개의 아이템을 가질 수 있음
+- Items 테이블: 각 아이템은 하나의 영수증에 속함(receiptId)
 
 
 ## 클래스 정의서
