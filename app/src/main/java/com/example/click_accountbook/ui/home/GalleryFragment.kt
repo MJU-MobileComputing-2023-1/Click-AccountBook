@@ -62,12 +62,12 @@ class GalleryFragment : Fragment() {
             val receipts = db.getAllReceipts()
 
             withContext(Dispatchers.Main) {
+                val tvEmpty = view?.findViewById<TextView>(R.id.tv_empty)
                 if (receipts.isNotEmpty()) {
                     adapter.updateReceipts(receipts)
+                    tvEmpty?.visibility = View.GONE
                 } else {
                     // Show a message if no receipts are available
-                    // This needs to be a TextView in your fragment_gallery.xml layout
-                    val tvEmpty = view?.findViewById<TextView>(R.id.tv_empty)
                     tvEmpty?.text = "선택한 영수증이 없습니다"
                     tvEmpty?.visibility = View.VISIBLE
                 }
@@ -78,7 +78,12 @@ class GalleryFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         // Reload the receipts when the fragment resumes
-        loadReceipts()
+        GlobalScope.launch(Dispatchers.IO) {
+            val receipts = db.getAllReceipts()
+            withContext(Dispatchers.Main) {
+                adapter.updateReceipts(receipts)
+            }
+        }
     }
 }
 
