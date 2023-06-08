@@ -91,7 +91,7 @@
 
 
 ## 클래스 정의서
-
+.kt
 1. `MainActivity` 클래스: 앱을 실행했을 때 첫 화면을 담당. Intent 를 사용해서 여러 화면에 기능들을 보여줌.
 2. `Receipt` 클래스: 영수증 정보를 저장하는 클래스. OCR API를 통해 얻은 정보를 이 클래스의 인스턴스로 저장.
 3. `ReceiptImage` 클래스: 갤러리에서 선택한 영수증 이미지와 관련된 정보를 저장하는 클래스.
@@ -102,7 +102,8 @@
 8. `StatisticsActivity` 클래스: 사용자의 주/월별 소비 그래프를 보여주는 화면을 담당하는 클래스.
 9. `SortReceiptsActivity` 클래스: 영수증을 금액별로 정렬해서 보여주는 화면을 담당하는 클래스.
 10. `FilterReceiptsActivity` 클래스: 영수증을 항목(매장 이름, 카드 번호 등)별로 필터링해서 보여주는 화면을 담당하는 클래스.
-
+11. 'StatisticsFragment' 클래스:앱의 통계 화면을 담당. 사용자의 소비 패턴에 대한 시각적 통계를 제공하기 위해 MPAndroidChart 라이브러리의 LineChart를 사용.
+12. 'StatisticsViewModel' 클래스: 이 클래스는 StatisticsFragment의 데이터를 관리. ViewModel은 데이터를 처리하고 준비. ViewModel은 영수증 데이터를 가져와서 그래프에 사용할 데이터로 변환.
 
 
 ## 동작 과정

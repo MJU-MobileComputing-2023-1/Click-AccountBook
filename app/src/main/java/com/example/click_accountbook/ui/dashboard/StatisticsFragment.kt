@@ -1,5 +1,5 @@
 package com.example.click_accountbook.ui.dashboard
-
+import com.example.click_accountbook.ui.dashboard.StatisticsViewModel
 import StatisticsViewModelFactory
 import android.graphics.Color
 import androidx.fragment.app.viewModels
@@ -23,9 +23,9 @@ import java.util.*
 class StatisticsFragment : Fragment() {
     private var _binding: FragmentStatisticsBinding? = null
     private val binding get() = _binding!!
-    private lateinit var statisticsViewModel: StatisticsViewModel
+    private lateinit var statisticsViewModel: StatisticsViewModel //binding
 
-    override fun onCreateView(
+    override fun onCreateView( //xml이 나타날때 호출되는 함수
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
@@ -33,9 +33,10 @@ class StatisticsFragment : Fragment() {
         val dbHandler = DatabaseHandler(requireContext())
 
         val viewModel: StatisticsViewModel by viewModels { StatisticsViewModelFactory(dbHandler) }
-        statisticsViewModel = viewModel
+        statisticsViewModel = viewModel         // 뷰 모델 초기화
 
-        statisticsViewModel.dates.observe(viewLifecycleOwner, { dates ->
+        // dates라는 라이브 데이터를 구독하고, 데이터가 변경될 때마다 새로운 값을 차트의 x축에 설정
+        statisticsViewModel.dates.observe(viewLifecycleOwner) { dates ->
             val xAxis = binding.lineChart.xAxis
             xAxis.valueFormatter = object : ValueFormatter() {
                 private val dateFormat = SimpleDateFormat("yyyy.MM.dd", Locale.getDefault())
@@ -46,20 +47,18 @@ class StatisticsFragment : Fragment() {
                         val date = dates[dateIndex]
                         return dateFormat.format(date)
                     }
-                    return ""
-                }
-            }
+                    return "" } }
             xAxis.setDrawLabels(true)
-            xAxis.position = XAxis.XAxisPosition.BOTTOM
-        })
+            xAxis.position = XAxis.XAxisPosition.BOTTOM }
 
-        statisticsViewModel.lineData.observe(viewLifecycleOwner, { lineDataList ->
+        // lineData라는 라이브 데이터를 구독하고, 데이터가 변경될 때마다 차트에 새로운 데이터를 설정
+        statisticsViewModel.lineData.observe(viewLifecycleOwner) { lineDataList ->
             Log.d("StatisticsFragment", "Observed line data list size: ${lineDataList.size}")
 
             val lineDataSet = LineDataSet(lineDataList, "Total Price")
             lineDataSet.color = Color.rgb(0, 0, 139)
-            lineDataSet.valueTextSize=20f
-            lineDataSet.lineWidth=3f
+            lineDataSet.valueTextSize = 20f
+            lineDataSet.lineWidth = 3f
             lineDataSet.setDrawCircles(true)
             lineDataSet.setCircleColor(Color.BLUE)
             lineDataSet.setDrawValues(true)
@@ -68,13 +67,13 @@ class StatisticsFragment : Fragment() {
             binding.lineChart.data = lineData
 
             binding.lineChart.invalidate()
-        })
+        }
 
-        return binding.root
+        return binding.root // 최종적으로 생성된 뷰 반환
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        _binding = null
+        _binding = null // 뷰 바인딩 해제
     }
 }

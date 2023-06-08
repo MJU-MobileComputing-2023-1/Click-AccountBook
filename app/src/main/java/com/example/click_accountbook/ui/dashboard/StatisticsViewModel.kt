@@ -14,66 +14,64 @@ import java.text.ParseException
 
 data class ReceiptData(
     val paymentDate: String,
-    val totalPrice: Float
+    val totalPrice: Float //그래프에 쓸 data들
 )
 
 class StatisticsViewModel(private val dbHandler: DatabaseHandler) : ViewModel() {
     private val _receiptData = MutableLiveData<List<ReceiptData>>()
     val receiptData: LiveData<List<ReceiptData>> = _receiptData
 
-    // Create LiveData for List<Entry> for the LineChart
     private val _lineData = MutableLiveData<List<Entry>>()
     val lineData: LiveData<List<Entry>> get() = _lineData
+
     private val _dates = MutableLiveData<List<Date>>()
     val dates: LiveData<List<Date>> get() = _dates
 
     init {
-        loadData()
+        loadData()      //ViewModel이 초기화될 때 데이터베이스에서 데이터 로드
+
     }
+    // 데이터베이스에서 데이터를 로드하고 필요한 형식으로 변환
+    private fun loadData() = viewModelScope.launch {
+        val receiptList = dbHandler.getAllReceipts().sortedBy { tryParseDate(it.paymentDate)?.time }
 
-    private fun loadData() {
-        viewModelScope.launch {
-            val receiptList = dbHandler.getAllReceipts()
-            Log.d("StatisticsViewModel", "Loaded receipt list size: ${receiptList.size}")
-            val receiptDataList = receiptList.map {
-                val formattedPaymentDate = it.paymentDate.replace("-", ". ").replace(".", ". ")
-                ReceiptData(formattedPaymentDate, it.totalPrice)
-            }
-            _receiptData.value = receiptDataList
+        Log.d("StatisticsViewModel", "receipt list size: ${receiptList.size}")
 
-            // Create a list of dates from the receipt data
-            val datesList = _receiptData.value?.mapNotNull { receiptData ->
-                tryParseDate(receiptData.paymentDate)?.also { date ->
-                    Log.d("StatisticsViewModel", "Parsed date in milliseconds: ${date.time}")
-                    Log.d(
-                        "StatisticsViewModel",
-                        "Line chart entry: Date: $date, Total Price: ${receiptData.totalPrice}"
-                    )
-                }
-            } ?: emptyList()
+        // 영수증 리스트를 ReceiptData의 리스트로 변환
+        val receiptDataList = receiptList.map { ReceiptData(formatPaymentDate(it.paymentDate), it.totalPrice) }
+        _receiptData.value = receiptDataList
 
-            _dates.value = datesList
+        val datesList = receiptDataList.mapNotNull { tryParseDate(it.paymentDate) }
+        _dates.value = datesList        // 영수증 데이터에서 날짜를 파싱하여 저장
 
-            // Replace date.time with index.toFloat()
-            val lineDataList = datesList.indices.map { index ->
-                Entry(index.toFloat(), _receiptData.value?.get(index)?.totalPrice ?: 0f)
-            }
-            _lineData.value = lineDataList
-        }
+        val lineDataList = datesList.mapIndexed { index, _ -> Entry(index.toFloat(), receiptDataList[index].totalPrice) }
+        _lineData.value = lineDataList        // 날짜를 라인 차트에 사용될 Entries 리스트로 변환
     }
-
+    private fun formatPaymentDate(date: String) = date.replace("-", ". ").replace(".", ". ")
+    // 결제 날짜 문자열을 표시 형식으로 변환
 
     private fun tryParseDate(dateString: String): Date? {
-        val formats = listOf("yyyy. MM. dd", "yyyy.MM.dd", "yyyy-MM-dd")
+        val formats = listOf("yyyy. MM. dd", "yyyy.MM.dd", "yyyy-MM-dd", "yy-MM-dd")
+        // 여러 형식을 사용하여 날짜 문자열을 파싱하고 필요한 경우 연도를 수정
 
         for (format in formats) {
             try {
-                return SimpleDateFormat(format, Locale.getDefault()).parse(dateString)
-            } catch (e: ParseException) {
-            }
+                val parsedDate = SimpleDateFormat(format, Locale.getDefault()).parse(dateString)
+                return correctYearForDate(parsedDate)
+            } catch (e: Exception) {}
         }
-
         return null
     }
-}
 
+    private fun correctYearForDate(date: Date?): Date? {
+        return date?.let {    // 파싱된 날짜의 연도가 2000 미만인 경우 수정
+            val calendar = Calendar.getInstance().apply { time = date }
+            if (calendar.get(Calendar.YEAR) < 2000) {
+                calendar.add(Calendar.YEAR, 2000)
+                calendar.time
+            } else {
+                date
+            }
+        }
+    }
+}
