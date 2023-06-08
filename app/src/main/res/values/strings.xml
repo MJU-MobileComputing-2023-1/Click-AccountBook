@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Click_AccountBook</string>
-    <string name="title_home">Home</string>
-    <string name="title_dashboard">Dashboard</string>
+    <string name="title_home">메인 HOME </string>
+    <string name="title_dashboard">그래프 </string>
     <string name="title_notifications">Notifications</string>
     <string name="captured_image">Captured image</string>
 </resources>
