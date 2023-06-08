@@ -24,6 +24,7 @@
 
     </androidx.cardview.widget.CardView>
 
+
     <TextView
         android:id="@+id/text_statistics"
         android:layout_width="match_parent"

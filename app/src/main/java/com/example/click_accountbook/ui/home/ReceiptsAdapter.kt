@@ -55,3 +55,4 @@ class ReceiptsAdapter(private val context: Context) : RecyclerView.Adapter<Recei
         }
     }
 }
+
