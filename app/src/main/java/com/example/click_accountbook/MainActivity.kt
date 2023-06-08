@@ -1,6 +1,5 @@
 package com.example.click_accountbook
 
-import android.content.Intent
 import android.os.Bundle
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.appcompat.app.AppCompatActivity
@@ -10,18 +9,15 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.example.click_accountbook.databinding.ActivityMainBinding
 
-
 class MainActivity : AppCompatActivity() {
 
-private lateinit var binding: ActivityMainBinding
+    private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-
 
         val navView: BottomNavigationView = binding.navView
 
@@ -30,6 +26,7 @@ private lateinit var binding: ActivityMainBinding
         // menu should be considered as top level destinations.
         val appBarConfiguration = AppBarConfiguration(setOf(
             R.id.navigation_gallery, R.id.navigation_statistics, R.id.navigation_sort_receipts))
+
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
 

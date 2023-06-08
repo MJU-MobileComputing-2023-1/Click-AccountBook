@@ -135,7 +135,7 @@
 - Commit은 따로 Branch 생성 / Fork 후 PR하기  
 Ty
 - 커밋 메시지는 "[Type] message" 형식으로 작성하기  
-
+gi
   | **Type** | **Meaning**                   |
   | -------- | ----------------------------- |
   | Feat     | 새로운 기능                   |
