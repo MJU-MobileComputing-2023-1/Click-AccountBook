@@ -1,6 +1,7 @@
 package com.example.click_accountbook.ui.dashboard
 
 import StatisticsViewModelFactory
+import android.graphics.Color
 import androidx.fragment.app.viewModels
 import android.os.Bundle
 import android.util.Log
@@ -55,15 +56,17 @@ class StatisticsFragment : Fragment() {
         statisticsViewModel.lineData.observe(viewLifecycleOwner, { lineDataList ->
             Log.d("StatisticsFragment", "Observed line data list size: ${lineDataList.size}")
 
-            // Creating LineDataSet from the List<Entry>
             val lineDataSet = LineDataSet(lineDataList, "Total Price")
-
-            // Creating LineData from the LineDataSet
+            lineDataSet.color = Color.rgb(0, 0, 139)
+            lineDataSet.valueTextSize=20f
+            lineDataSet.lineWidth=3f
+            lineDataSet.setDrawCircles(true)
+            lineDataSet.setCircleColor(Color.BLUE)
+            lineDataSet.setDrawValues(true)
             val lineData = LineData(lineDataSet)
 
             binding.lineChart.data = lineData
 
-            // Refresh the chart
             binding.lineChart.invalidate()
         })
 
