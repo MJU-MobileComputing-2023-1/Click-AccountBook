@@ -62,7 +62,7 @@ interface DBDao {
     suspend fun insertImage(image: Image)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertItem(item: Item)
+    suspend fun insertItem(item: com.example.click_accountbook.Item)
 
     @Query("SELECT * FROM receipts")
     suspend fun getAllReceipts(): List<Receipt>

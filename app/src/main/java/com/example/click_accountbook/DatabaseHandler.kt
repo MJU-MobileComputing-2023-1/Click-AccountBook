@@ -3,6 +3,7 @@ package com.example.click_accountbook
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -50,50 +51,30 @@ class DatabaseHandler(context: Context) {
                 totalPrice = receiptInfo.totalPrice,
                 estimatedLanguage = ""
             )
+            Log.d("newReceipt", "Item Name: ${newReceipt}")
+
 
             // Insert the new Receipt into the database
             dbDao.insertReceipt(newReceipt)
 
-            // Parse and insert items
-            val jsonObject = JSONObject(ocrResult)
-            if(jsonObject.has("items")) {
-                val itemsJsonArray = jsonObject.getJSONArray("items")
-                val items = receiptOcr.parseItems(itemsJsonArray)
-                for (item in items) {
-                    // Generate a new item ID
-                    val newItemId = getNextItemId()
+            val items = receiptOcr.parseItems(ocrResult)
 
-                    // Create new Item object and insert it
-                    val newItem = Item(
-                        newItemId,
-                        newReceiptId,
-                        item.itemName,
-                        item.itemCode,
-                        item.itemCount,
-                        item.itemPrice,
-                        item.itemUnitPrice
-                    )
-                    insertItem(newItem)
-                }
-            } else {
-                val items = receiptOcr.parseItems(null)
-                for (item in items) {
-                    // Generate a new item ID
-                    val newItemId = getNextItemId()
-
-                    // Create new Item object and insert it
-                    val newItem = Item(
-                        newItemId,
-                        newReceiptId,
-                        item.itemName,
-                        item.itemCode,
-                        item.itemCount,
-                        item.itemPrice,
-                        item.itemUnitPrice
-                    )
-                    insertItem(newItem)
-                }
+            val itemList = mutableListOf<Item>()
+            for (itemInfo in items) {
+                val newItem = Item(
+                    id = itemInfo.id, // Set the item ID
+                    receiptId = newReceiptId, // Set the receipt ID
+                    itemName = itemInfo.itemName,
+                    itemCode = itemInfo.itemCode,
+                    itemCount = itemInfo.itemCount,
+                    itemPrice = itemInfo.itemPrice,
+                    itemUnitPrice = itemInfo.itemUnitPrice
+                )
+                itemList.add(newItem)
+                Log.d("newItem", "Item Name: $newItem")
             }
+            // Insert the new Items into the database
+            insertItems(itemList)
         }
     }
 
@@ -130,9 +111,10 @@ class DatabaseHandler(context: Context) {
     private suspend fun getNextItemId(): String {
         return withContext(Dispatchers.IO) {
             val items = dbDao.getAllItems()
-            val maxId = items.maxByOrNull { it.id.toIntOrNull() ?: 0 }?.id ?: "-1"
+            var maxId = items.maxByOrNull { it.id.toIntOrNull() ?: 0 }?.id ?: "0"
             val newId = maxId.toInt() + 1
-            newId.toString()
+            maxId = newId.toString()
+            maxId
         }
     }
 
@@ -142,10 +124,11 @@ class DatabaseHandler(context: Context) {
         }
     }
 
-    fun insertItem(item: Item) {
+    private fun insertItems(items: List<Item>) {
         CoroutineScope(Dispatchers.IO).launch {
-            withContext(Dispatchers.Main) {
-                dbDao.insertItem(item)
+            for (item in items) {
+                val insertedId = dbDao.insertItem(item)
+                Log.d("Database", "Inserted item with ID: $insertedId")
             }
         }
     }

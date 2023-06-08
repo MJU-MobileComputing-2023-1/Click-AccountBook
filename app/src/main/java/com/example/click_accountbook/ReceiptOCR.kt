@@ -1,7 +1,9 @@
 package com.example.click_accountbook
 
+import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
+import java.util.*
 
 data class ReceiptInfo(
     val storeName: String,
@@ -15,6 +17,15 @@ data class ReceiptInfo(
     val cardNumber: String?,
     val confirmNum: String?,
     val totalPrice: Float,
+)
+data class ItemInfo(
+    val id: String = UUID.randomUUID().toString(), // Generate a new item ID
+    val receiptId : String,
+    val itemName: String,
+    val itemCode: String,
+    val itemCount: Float?,
+    val itemPrice: Float?,
+    val itemUnitPrice: Float?
 )
 
 
@@ -43,6 +54,7 @@ class ReceiptOCR {
 
         if (receiptObject.has("storeInfo")) {
             val storeInfoObject = receiptObject.getJSONObject("storeInfo")
+
             if (storeInfoObject.has("name"))
                 storeName = storeInfoObject.getJSONObject("name").getString("text")
             if (storeInfoObject.has("bizNum"))
@@ -73,9 +85,10 @@ class ReceiptOCR {
         if (receiptObject.has("totalPrice")) {
             val totalPriceObject = receiptObject.getJSONObject("totalPrice")
             if (totalPriceObject.has("price")) {
-                val priceString = totalPriceObject.getJSONObject("price").getString("text")
-                val priceWithoutComma = priceString.replace("₩", "").replace(",", "")
-                totalPrice = priceWithoutComma.toDouble().toFloat()
+                val priceObject = totalPriceObject.getJSONObject("price")
+                if (priceObject.has("formatted")) {
+                    totalPrice = priceObject.getJSONObject("formatted").getDouble("value").toFloat()
+                }
             }
         }
 
@@ -95,56 +108,84 @@ class ReceiptOCR {
         )
     }
 
-    fun parseItems(itemsJsonArray: JSONArray?): List<Item> {
-        val items = mutableListOf<Item>()
+    fun parseItems(ocrResult: String): List<ItemInfo> {
+        val itemsList = mutableListOf<ItemInfo>()
 
-        if (itemsJsonArray != null && itemsJsonArray.length() > 0) {
-            for (i in 0 until itemsJsonArray.length()) {
-                val itemObject = itemsJsonArray.getJSONObject(i)
+        val jsonObject = JSONObject(ocrResult)
+        val imagesArray = jsonObject.getJSONArray("images")
+        val receiptObject =
+            imagesArray.getJSONObject(0).getJSONObject("receipt").getJSONObject("result")
 
-                val name =
-                    if (itemObject.has("name")) itemObject.getString("name") else "Unknown Name IN"
-                val code =
-                    if (itemObject.has("code")) itemObject.getString("code") else "Unknown Code IN"
-                val count =
-                    if (itemObject.has("count")) itemObject.getDouble("count").toFloat() else 0.0F
-                var price = 0.0F
-                var unitPrice = 0.0F
-                if (itemObject.has("priceInfo")) {
-                    val priceInfoObject = itemObject.getJSONObject("priceInfo")
-                    price = if (priceInfoObject.has("price")) priceInfoObject.getDouble("price")
-                        .toFloat() else 0.0F
-                    unitPrice =
-                        if (priceInfoObject.has("unitPrice")) priceInfoObject.getDouble("unitPrice")
-                            .toFloat() else 0.0F
+        if (receiptObject.has("subResults")) {
+            val subResultsArray = receiptObject.getJSONArray("subResults")
+            for (i in 0 until subResultsArray.length()) {
+                val subResultObject = subResultsArray.getJSONObject(i)
+                if (subResultObject.has("items")) {
+                    val itemsArray = subResultObject.getJSONArray("items")
+                    for (j in 0 until itemsArray.length()) {
+                        val itemObject = itemsArray.getJSONObject(j)
+                        val itemName = if (itemObject.has("name")) {
+                            itemObject.getJSONObject("name").getString("text")
+                        } else {
+                            "Unknown name"
+                        }
+                        val itemCode = if (itemObject.has("code")) {
+                            itemObject.getJSONObject("code").getString("text")
+                        } else {
+                            "Unknown code"
+                        }
+                        val itemCount = if (itemObject.has("count")) {
+                            itemObject.getJSONObject("count").getDouble("text").toFloat()
+                        } else {
+                            0.0F
+                        }
+                        val itemPrice = if (itemObject.has("price")) {
+                            val priceInfoObject = itemObject.getJSONObject("price")
+                            if (priceInfoObject.has("price")) {
+                                val priceObject = priceInfoObject.getJSONObject("price")
+                                if (priceObject.has("formatted")) {
+                                    priceObject.getJSONObject("formatted").getDouble("value").toFloat()
+                                } else {
+                                    0.0F
+                                }
+                            } else {
+                                0.0F
+                            }
+                        } else {
+                            0.0F
+                        }
+                        val itemUnitPrice = if (itemObject.has("price")) {
+                            val priceInfoObject = itemObject.getJSONObject("price")
+                            if (priceInfoObject.has("unitPrice")) {
+                                val priceObject = priceInfoObject.getJSONObject("unitPrice")
+                                if (priceObject.has("formatted")) {
+                                    priceObject.getJSONObject("formatted").getDouble("value").toFloat()
+                                } else {
+                                    0.0F
+                                }
+                            } else {
+                                0.0F
+                            }
+                        } else {
+                            0.0F
+                        }
+
+                        val itemInfo = ItemInfo(
+                            id = UUID.randomUUID().toString(), // Generate a new item ID here
+                            receiptId = "",
+                            itemName = itemName,
+                            itemCode = itemCode,
+                            itemCount = itemCount,
+                            itemPrice = itemPrice,
+                            itemUnitPrice = itemUnitPrice
+                        )
+                        itemsList.add(itemInfo)
+                    }
                 }
-
-                val item = Item(
-                    id = "", // Generate a new item ID
-                    receiptId = "", // Use the receipt ID
-                    itemName = name,
-                    itemCode = code,
-                    itemCount = count,
-                    itemPrice = price,
-                    itemUnitPrice = unitPrice
-                )
-
-                items.add(item)
             }
-        } else {
-            // Add a default item when itemsJsonArray is null or empty
-            val defaultItem = Item(
-                id = "", // Generate a new item ID
-                receiptId = "", // Use the receipt ID
-                itemName = "Unknown Name",
-                itemCode = "Unknown Code",
-                itemCount = 0.0F,
-                itemPrice = 0.0F,
-                itemUnitPrice = 0.0F
-            )
-            items.add(defaultItem)
         }
 
-        return items
+        return itemsList
     }
+
 }
