@@ -15,13 +15,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.Spinner
 
 class SortReceiptsFragment : Fragment() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: ReceiptsAdapter
     private lateinit var db: DatabaseHandler
-    private lateinit var root: View // root 변수 선언
-    private lateinit var sortButton: Button
+    private lateinit var root: View
+    private lateinit var sortSpinner: Spinner
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -36,11 +39,29 @@ class SortReceiptsFragment : Fragment() {
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         recyclerView.adapter = adapter
 
-        // Initialize database handle
-        sortButton = root.findViewById(R.id.sortButton)
-        sortButton.setOnClickListener {
-            adapter.sortReceiptsByTotalAmount()
+        // Initialize Spinner
+        sortSpinner = root.findViewById(R.id.sortSpinner)
+        ArrayAdapter.createFromResource(
+            requireContext(),
+            R.array.sort_array,
+            R.layout.spinner_item // 커스텀 레이아웃을 사용합니다.
+        ).also { adapter ->
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            sortSpinner.adapter = adapter
         }
+
+        sortSpinner.setOnItemSelectedListener(object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
+                when (position) {
+                    0 -> adapter.updateReceipts(adapter.receipts)
+                    1 -> adapter.sortReceiptsByTotalAmount(false)
+                    2 -> adapter.sortReceiptsByTotalAmount(true)
+                }
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>) {
+            }
+        })
 
         return root
     }

@@ -4,50 +4,16 @@
     android:layout_height="wrap_content"
     android:orientation="vertical">
 
-    <Button
-        android:id="@+id/sortButton"
-        android:layout_width="wrap_content"
+    <Spinner
+        android:id="@+id/sortSpinner"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:background="#808080"
-        android:text="정렬" />
-
-
+        android:layout_margin="10dp"
+        android:background="@drawable/spinner_background"
+        android:layout_marginBottom="40dp"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
-
-
-
-    <TextView
-        android:id="@+id/storeName"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:textSize="30sp"
-        android:textColor="@android:color/black"
-        android:visibility="visible" />
-
-    <TextView
-        android:id="@+id/totalPrice"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:textSize="18sp"
-        android:textColor="@android:color/black"
-        android:visibility="visible" />
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:background="@android:color/white"
-        />
-
-
-
+        android:layout_height="wrap_content" />
 </LinearLayout>
-
-
-
