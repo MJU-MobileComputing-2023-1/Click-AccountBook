@@ -4,4 +4,9 @@
     <string name="title_dashboard">그래프 </string>
     <string name="title_notifications">Notifications</string>
     <string name="captured_image">Captured image</string>
+    <string-array name="sort_array">
+        <item>기본</item>
+        <item>오름차순</item>
+        <item>내림차순</item>
+    </string-array>
 </resources>
