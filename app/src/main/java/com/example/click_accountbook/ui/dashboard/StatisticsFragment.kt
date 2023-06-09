@@ -78,7 +78,6 @@ class StatisticsFragment : Fragment() {
 
             tableLayout.removeAllViews() //초기화
 
-            // Create a new table row and add it to the table for each ReceiptData object
             receiptDataList.forEach { receiptData ->
                 val row = TableRow(context).apply {
                     layoutParams = TableRow.LayoutParams(
@@ -95,11 +94,25 @@ class StatisticsFragment : Fragment() {
                     setPadding(5, 5, 5, 5) // 텍스트 뷰에 패딩 추가
                 }
                 row.addView(paymentDateTextView)
+                val storeNameTextView = TextView(context).apply {
+                    text = receiptData.storeName
+                    setBackgroundResource(R.color.white)
+                    setPadding(5, 5, 5, 5)
+                }
+                row.addView(storeNameTextView)
+
+                val paymentCardCompanyTextView = TextView(context).apply {
+                    text = receiptData.paymentCardCompany
+                    setBackgroundResource(R.color.white)
+                    setPadding(5, 5, 5, 5)
+                }
+                row.addView(paymentCardCompanyTextView)
+
 
                 val totalPriceTextView = TextView(context).apply {
                     text = receiptData.totalPrice.toString()
-                    setBackgroundResource(R.color.white) // 셀 배경 색상 설정
-                    setPadding(5, 5, 5, 5) // 텍스트 뷰에 패딩 추가
+                    setBackgroundResource(R.color.white)
+                    setPadding(5, 5, 5, 5)
                 }
                 row.addView(totalPriceTextView)
                 tableLayout.addView(row)

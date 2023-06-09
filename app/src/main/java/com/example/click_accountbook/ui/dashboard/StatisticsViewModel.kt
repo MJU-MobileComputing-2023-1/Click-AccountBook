@@ -14,7 +14,9 @@ import java.text.ParseException
 
 data class ReceiptData(
     val paymentDate: String,
-    val totalPrice: Float //그래프에 쓸 data들
+    val totalPrice: Float,
+    val storeName: String?, // null 값을 가질 수 있는
+    val paymentCardCompany: String? // null 값을 가질 수 있는
 )
 
 class StatisticsViewModel(private val dbHandler: DatabaseHandler) : ViewModel() {
@@ -38,7 +40,7 @@ class StatisticsViewModel(private val dbHandler: DatabaseHandler) : ViewModel() 
         Log.d("StatisticsViewModel", "receipt list size: ${receiptList.size}")
 
         // 영수증 리스트를 ReceiptData의 리스트로 변환
-        val receiptDataList = receiptList.map { ReceiptData(formatPaymentDate(it.paymentDate), it.totalPrice) }
+        val receiptDataList = receiptList.map { ReceiptData(formatPaymentDate(it.paymentDate), it.totalPrice, it.storeName, it.paymentCardCompany) }
         _receiptData.value = receiptDataList
 
         val datesList = receiptDataList.mapNotNull { tryParseDate(it.paymentDate) }
