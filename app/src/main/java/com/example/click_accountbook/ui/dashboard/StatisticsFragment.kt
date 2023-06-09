@@ -1,10 +1,12 @@
 package com.example.click_accountbook.ui.dashboard
+
 import com.example.click_accountbook.ui.dashboard.StatisticsViewModel
 import StatisticsViewModelFactory
 import android.graphics.Color
 import androidx.fragment.app.viewModels
 import android.os.Bundle
 import android.util.Log
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -78,6 +80,43 @@ class StatisticsFragment : Fragment() {
 
             tableLayout.removeAllViews() //초기화
 
+            // Create a header row.
+            val headerRow = TableRow(context).apply {
+                layoutParams = TableRow.LayoutParams(
+                    TableRow.LayoutParams.MATCH_PARENT,
+                    TableRow.LayoutParams.WRAP_CONTENT
+                ).apply { setMargins(1) }
+                setBackgroundResource(R.color.black) // setting row background color
+                setPadding(5, 5, 5, 5) // setting padding to the row
+            }
+
+            val dateTitleTextView = TextView(context).apply {
+                text = "날짜"
+                gravity = Gravity.CENTER
+                setBackgroundResource(R.color.white) // setting cell background color
+                setPadding(5, 5, 5, 5) // setting padding to the text view
+            }
+            headerRow.addView(dateTitleTextView)
+
+            val contentTitleTextView = TextView(context).apply {
+                text = "결제 내용"
+                gravity = Gravity.CENTER
+                setBackgroundResource(R.color.white)
+                setPadding(5, 5, 5, 5)
+            }
+            headerRow.addView(contentTitleTextView)
+
+            val cardTitleTextView = TextView(context).apply {
+                text = "결제 카드"
+                gravity = Gravity.CENTER
+                setBackgroundResource(R.color.white)
+                setPadding(5, 5, 5, 5)
+            }
+            headerRow.addView(cardTitleTextView)
+
+            // Adding the header row to the table layout.
+            tableLayout.addView(headerRow)
+
             receiptDataList.forEach { receiptData ->
                 val row = TableRow(context).apply {
                     layoutParams = TableRow.LayoutParams(
@@ -119,7 +158,7 @@ class StatisticsFragment : Fragment() {
             }
         }
 
-        return binding.root //최종적으로 생성된 뷰 return
+        return binding.root
     }
 
     override fun onDestroyView() {
