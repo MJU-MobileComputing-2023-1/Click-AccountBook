@@ -24,6 +24,8 @@ import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.ValueFormatter
 import java.text.SimpleDateFormat
 import java.util.*
+import java.text.NumberFormat
+import java.util.Locale
 
 class StatisticsFragment : Fragment() {
     private var _binding: FragmentStatisticsBinding? = null
@@ -114,6 +116,14 @@ class StatisticsFragment : Fragment() {
             }
             headerRow.addView(cardTitleTextView)
 
+            val totalTextView = TextView(context).apply {
+                text = "결제 금액"
+                gravity = Gravity.CENTER
+                setBackgroundResource(R.color.white)
+                setPadding(5, 5, 5, 5)
+            }
+            headerRow.addView(totalTextView)
+
             // Adding the header row to the table layout.
             tableLayout.addView(headerRow)
 
@@ -128,7 +138,7 @@ class StatisticsFragment : Fragment() {
                 }
 
                 val paymentDateTextView = TextView(context).apply {
-                    text = receiptData.paymentDate
+                    text = formatPaymentDate(receiptData.paymentDate)
                     setBackgroundResource(R.color.white) // 셀 배경 색상 설정
                     setPadding(5, 5, 5, 5) // 텍스트 뷰에 패딩 추가
                 }
@@ -149,7 +159,7 @@ class StatisticsFragment : Fragment() {
 
 
                 val totalPriceTextView = TextView(context).apply {
-                    text = receiptData.totalPrice.toString()
+                    text = "${NumberFormat.getNumberInstance(Locale.US).format(receiptData.totalPrice.toInt())} 원"
                     setBackgroundResource(R.color.white)
                     setPadding(5, 5, 5, 5)
                 }
@@ -160,6 +170,7 @@ class StatisticsFragment : Fragment() {
 
         return binding.root
     }
+    private fun formatPaymentDate(date: String) = date.take(8).replace("-", ". ").replace(".", ". ")
 
     override fun onDestroyView() {
         super.onDestroyView()
