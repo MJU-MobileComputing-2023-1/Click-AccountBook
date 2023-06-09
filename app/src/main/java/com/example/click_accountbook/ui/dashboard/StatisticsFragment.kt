@@ -8,6 +8,9 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TableRow
+import android.widget.TextView
+import androidx.core.view.setMargins
 import androidx.fragment.app.Fragment
 import com.example.click_accountbook.DatabaseHandler
 import com.example.click_accountbook.R
@@ -47,7 +50,8 @@ class StatisticsFragment : Fragment() {
                         val date = dates[dateIndex]
                         return dateFormat.format(date)
                     }
-                    return "" } }
+                    return "" }
+            }
             xAxis.setDrawLabels(true)
             xAxis.position = XAxis.XAxisPosition.BOTTOM }
 
@@ -68,12 +72,45 @@ class StatisticsFragment : Fragment() {
 
             binding.lineChart.invalidate()
         }
+        //receipt data 받아서 표로 생성.
+        statisticsViewModel.receiptData.observe(viewLifecycleOwner) { receiptDataList ->
+            val tableLayout = binding.receiptTable
 
-        return binding.root // 최종적으로 생성된 뷰 반환
+            tableLayout.removeAllViews() //초기화
+
+            // Create a new table row and add it to the table for each ReceiptData object
+            receiptDataList.forEach { receiptData ->
+                val row = TableRow(context).apply {
+                    layoutParams = TableRow.LayoutParams(
+                        TableRow.LayoutParams.MATCH_PARENT,
+                        TableRow.LayoutParams.WRAP_CONTENT
+                    ).apply { setMargins(1) }
+                    setBackgroundResource(R.color.black) // 행 배경 색상 (테두리 색상) 설정
+                    setPadding(5, 5, 5, 5) // 행에 패딩 추가
+                }
+
+                val paymentDateTextView = TextView(context).apply {
+                    text = receiptData.paymentDate
+                    setBackgroundResource(R.color.white) // 셀 배경 색상 설정
+                    setPadding(5, 5, 5, 5) // 텍스트 뷰에 패딩 추가
+                }
+                row.addView(paymentDateTextView)
+
+                val totalPriceTextView = TextView(context).apply {
+                    text = receiptData.totalPrice.toString()
+                    setBackgroundResource(R.color.white) // 셀 배경 색상 설정
+                    setPadding(5, 5, 5, 5) // 텍스트 뷰에 패딩 추가
+                }
+                row.addView(totalPriceTextView)
+                tableLayout.addView(row)
+            }
+        }
+
+        return binding.root //최종적으로 생성된 뷰 return
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        _binding = null // 뷰 바인딩 해제
+        _binding = null
     }
 }
