@@ -1,99 +1,61 @@
 package com.example.click_accountbook.ui.notifications
 
-import com.example.click_accountbook.Receipt
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.example.click_accountbook.Item
 import com.example.click_accountbook.R
 import java.text.NumberFormat
-import java.util.Locale
+import java.util.*
+import kotlin.collections.HashMap
+import kotlin.collections.HashSet
 
-class ReceiptsAdapter(private val context: Context) : RecyclerView.Adapter<ReceiptsAdapter.ReceiptViewHolder>() {
+class ReceiptsAdapter(private val context: Context) : RecyclerView.Adapter<ReceiptsAdapter.ItemViewHolder>() {
 
-    var receipts: List<Receipt> = listOf()
+    var items: List<Item> = listOf()
     private val storeTotals: HashMap<String, Float> = hashMapOf()
     private val processedStores: HashSet<String> = hashSetOf()
 
 
-    override fun onBindViewHolder(holder: ReceiptViewHolder, position: Int) {
-        val receipt = receipts[position]
-        holder.bind(receipt)
+    override fun onBindViewHolder(holder: ItemViewHolder, position: Int) {
+        val item = items[position]
+        holder.bind(item)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ReceiptViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemViewHolder {
         val view = LayoutInflater.from(context).inflate(R.layout.sort_item, parent, false)
-        return ReceiptViewHolder(view)
+        return ItemViewHolder(view)
     }
 
-    override fun getItemCount(): Int = receipts.size
+    override fun getItemCount(): Int = items.size
 
-    fun updateReceipts(receipts: List<Receipt>) {
-        this.receipts = receipts
-        calculateStoreTotals()
+    fun updateItems(items: List<Item>) {
+        this.items = items
         notifyDataSetChanged()
     }
 
-    fun sortReceiptsByTotalAmountAscending() {
-        receipts = receipts.sortedBy { storeTotals[it.storeName] }
+    fun sortItemsByPriceAscending() {
+        items = items.sortedBy { it.itemPrice }
         notifyDataSetChanged()
     }
 
-    fun sortReceiptsByTotalAmountDescending() {
-        receipts = receipts.sortedByDescending { storeTotals[it.storeName] }
+    fun sortItemsByPriceDescending() {
+        items = items.sortedByDescending { it.itemPrice }
         notifyDataSetChanged()
     }
 
-    inner class ReceiptViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        private val storeName: TextView = view.findViewById(R.id.storeName)
-        private val totalPrice: TextView = view.findViewById(R.id.totalPrice)
+    inner class ItemViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        private val itemName: TextView = view.findViewById(R.id.itemName)
+        private val itemPrice: TextView = view.findViewById(R.id.itemPrice)
 
-        fun bind(receipt: Receipt) {
-            storeName.text = receipt.storeName
-            totalPrice.text = "총 구매금액: ${receipt.totalPrice}원"
+        fun bind(item: Item) {
+            itemName.text = item.itemName
 
-            // Store totals
-            val total = storeTotals[receipt.storeName]?.toInt()
-            val formatter = NumberFormat.getNumberInstance(Locale.US)
-            totalPrice.text = "총 구매금액: ${formatter.format(total ?: 0)}원"
+            val format = NumberFormat.getNumberInstance(Locale.US)
+            itemPrice.text = "가격: ${format.format(item.itemPrice)}원"
         }
     }
-
-    private fun calculateStoreTotals() {
-        storeTotals.clear()
-
-        for (receipt in receipts) {
-            val total = storeTotals[receipt.storeName]
-            if (total == null) {
-                storeTotals[receipt.storeName] = receipt.totalPrice
-            } else {
-                storeTotals[receipt.storeName] = total + receipt.totalPrice
-            }
-        }
-
-        val uniqueReceipts: MutableList<Receipt> = mutableListOf()
-        for (receipt in receipts) {
-            if (uniqueReceipts.none { it.storeName == receipt.storeName }) {
-                uniqueReceipts.add(receipt)
-            }
-        }
-
-        receipts = uniqueReceipts
-    }
-
-    fun sortReceiptsByTotalAmount(descending: Boolean) {
-        receipts = if (descending) {
-            receipts.sortedByDescending { storeTotals[it.storeName] }
-        } else {
-            receipts.sortedBy { storeTotals[it.storeName] }
-        }
-        notifyDataSetChanged()
-    }
-    fun sortReceiptsByTotalAmount() {
-        receipts = receipts.sortedByDescending { storeTotals[it.storeName] }
-        notifyDataSetChanged()
-    }
-
 }
