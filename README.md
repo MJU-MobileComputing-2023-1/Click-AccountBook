@@ -8,54 +8,60 @@
 - 사용할 API : NAVER CLOVA OCR API (https://api.ncloud-docs.com/docs/ai-application-service-ocr-ocrdocumentocr)
 - 기능
   - `AddReceiptActivity`: 갤러리에서 영수증 이미지를 선택하고, 이를 `DatabaseHandler` 클래스에 전달. 이후 OCR API를 통해 정보를 추출하는 기능
-  - `DatabaseHandler`: OCR API를 통해 추출한 영수증 정보 및 선택한 사진 정보를 데이터베이스에 저장하는 기능
+  - `DatabaseHandler`: OCR API를 통해 추출한 영수증 정보 및 선택한 사진 정보를 데이터베이스에 저장하는 기능 (Image, Receipt, Item 을 insert/update/delete)
   - `GalleryActivity`: 저장된 영수증 정보를 갤러리에서 보여주는 기능
   - `StatisticsActivity`: 영수증 정보를 주/월별로 정리하여 소비 패턴을 그래프로 보여주는 기능
   - `SortReceiptsActivity`: 영수증을 금액별로 정렬하여 보여주는 기능
   - `FilterReceiptsActivity`: 영수증을 항목(매장 이름, 카드 번호 등)별로 필터링하여 보여주는 기능
+  - `NaverClovaOCR.kt` : Naver Clova OCR API에 이미지 파일을 전송하고, OCR 결과를 반환
+  - `ReceiptOCR.kt` : Naver Clova OCR API의 응답을 해석하여 영수증 정보를 추출
+
 
 ## 테이블 정의서
 
 1. **Image Table**
+: 이미지 정보를 저장하며, 다음과 같은 컬럼들로 구성
 
-   | Column Name | Data Type | Description                    |
-   | ----------- | --------- | ------------------------------ |
-   | id          | String    | Image의 고유 ID                |
-   | format      | String    | Image의 형식 (ex. jpg, png 등) |
-   | path        | String    | Image의 저장 경로              |
-   | timestamp   | Date      | Image가 생성된 시간            |
-   | receiptId   | String    | 해당 Image가 속한 Receipt의 ID |
+| 필드명    | 자료형 | 설명                               |
+| --------- | ------ | ---------------------------------- |
+| id        | String | 이미지의 고유 식별자 (기본키)      |
+| format    | String | 이미지 형식                        |
+| path      | String | 이미지 경로                        |
+| timestamp | Date   | 이미지가 생성된 시간               |
+| receiptId | String | 이미지가 속한 영수증의 고유 식별자 |
 
 2. **Receipt Table**
+: 영수증 정보를 저장하며, 다음과 같은 컬럼들로 구성
 
-   | Column Name        | Data Type | Description                                 |
-   | ------------------ | --------- | ------------------------------------------- |
-   | id                 | String    | Receipt의 고유 ID                           |
-   | storeName          | String    | 매장 이름                                   |
-   | storeSubName       | String    | 매장 부가 정보 (Nullable)                   |
-   | storeBizNum        | String    | 매장 사업자 번호 (Nullable)                 |
-   | storeAddress       | String    | 매장 주소 (Nullable)                        |
-   | storeTel           | String    | 매장 전화번호 (Nullable)                    |
-   | paymentDate        | String    | 결제 날짜                                   |
-   | paymentTime        | String    | 결제 시간                                   |
-   | paymentCardCompany | String    | 결제 카드 회사 (Nullable)                   |
-   | paymentCardNumber  | String    | 결제 카드 번호 (Nullable)                   |
-   | paymentConfirmNum  | String    | 결제 확인 번호 (Nullable)                   |
-   | totalPrice         | Float     | 총 가격                                     |
-   | estimatedLanguage  | String    | 추정 언어                                   |
-   | imageId            | String    | 해당 Receipt에 연결된 Image의 ID (Nullable) |
+| 필드명             | 자료형            | 설명                          |
+| ------------------ | ----------------- | ----------------------------- |
+| id                 | String            | 영수증의 고유 식별자 (기본키) |
+| storeName          | String            | 상점 이름                     |
+| storeSubName       | String (nullable) | 상점 부가 이름                |
+| storeBizNum        | String (nullable) | 상점 사업자 번호              |
+| storeAddress       | String (nullable) | 상점 주소                     |
+| storeTel           | String (nullable) | 상점 전화번호                 |
+| paymentDate        | String            | 결제 날짜                     |
+| paymentTime        | String            | 결제 시간                     |
+| paymentCardCompany | String (nullable) | 결제 카드 회사                |
+| paymentCardNumber  | String (nullable) | 결제 카드 번호                |
+| paymentConfirmNum  | String (nullable) | 결제 확인 번호                |
+| totalPrice         | Float             | 총 가격                       |
+| estimatedLanguage  | String            | 예상 언어                     |
+| imageId            | String (nullable) | 해당 영수증 이미지의 ID       |
 
 3. **Item Table**
+: 상품 정보를 저장하며, 다음과 같은 컬럼들로 구성
 
-   | Column Name   | Data Type | Description                   |
-   | ------------- | --------- | ----------------------------- |
-   | id            | String    | Item의 고유 ID                |
-   | receiptId     | String    | 해당 Item이 속한 Receipt의 ID |
-   | itemName      | String    | 아이템 이름                   |
-   | itemCode      | String    | 아이템 코드                   |
-   | itemCount     | Float     | 아이템 갯수 (Nullable)        |
-   | itemPrice     | Float     | 아이템 가격 (Nullable)        |
-   | itemUnitPrice | Float     | 아이템 단가 (Nullable)        |
+| 필드명        | 자료형           | 설명                               |
+| ------------- | ---------------- | ---------------------------------- |
+| id            | String           | 아이템의 고유 식별자 (기본키)      |
+| receiptId     | String           | 아이템이 속한 영수증의 고유 식별자 |
+| itemName      | String           | 아이템 이름                        |
+| itemCode      | String           | 아이템 코드                        |
+| itemCount     | Float (nullable) | 아이템 개수                        |
+| itemPrice     | Float (nullable) | 아이템 가격                        |
+| itemUnitPrice | Float (nullable) | 아이템 단위 가격                   |
 
 
 
