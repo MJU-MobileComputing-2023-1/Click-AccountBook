@@ -5,7 +5,6 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -53,9 +52,9 @@ class SortReceiptsFragment : Fragment() {
         sortSpinner.setOnItemSelectedListener(object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
                 when (position) {
-                    0 -> adapter.updateReceipts(adapter.receipts)
-                    1 -> adapter.sortReceiptsByTotalAmount(false)
-                    2 -> adapter.sortReceiptsByTotalAmount(true)
+                    0 -> adapter.updateItems(adapter.items)
+                    1 -> adapter.sortItemsByPriceAscending()
+                    2 -> adapter.sortItemsByPriceDescending()
                 }
             }
 
@@ -76,28 +75,45 @@ class SortReceiptsFragment : Fragment() {
 
     private fun loadReceipts() {
         GlobalScope.launch(Dispatchers.IO) {
-            val receipts = db.getAllReceipts()
+            val items = db.getAllItems()
 
             withContext(Dispatchers.Main) {
-                if (receipts.isNotEmpty()) {
-                    adapter.updateReceipts(receipts)
+                if (items.isNotEmpty()) {
+                    adapter.updateItems(items)
 
                 } else {
                     // Show a message if no receipts are available
-                    val tvEmpty = root.findViewById<TextView>(R.id.storeName)
+                    val tvEmpty = root.findViewById<TextView>(R.id.itemName)
                     tvEmpty?.text = "데이터가 없습니다"
                     tvEmpty?.visibility = View.VISIBLE
                 }
             }
         }
     }
+
+    private fun loadItems() {
+        GlobalScope.launch(Dispatchers.IO) {
+            val items = db.getAllItems()
+            withContext(Dispatchers.Main) {
+                if (items.isNotEmpty()) {
+                    adapter.updateItems(items)
+                } else {
+                    // Show a message if no items are available
+                    val tvEmpty = root.findViewById<TextView>(R.id.itemName)
+                    tvEmpty?.text = "데이터가 없습니다"
+                    tvEmpty?.visibility = View.VISIBLE
+                }
+            }
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         // Reload the receipts when the fragment resumes
         GlobalScope.launch(Dispatchers.IO) {
-            val receipts = db.getAllReceipts()
+            val items = db.getAllItems()
             withContext(Dispatchers.Main) {
-                adapter.updateReceipts(receipts)
+                adapter.updateItems(items)
             }
         }
     }

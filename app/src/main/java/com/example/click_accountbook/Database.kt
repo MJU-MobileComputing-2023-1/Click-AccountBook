@@ -94,6 +94,7 @@ interface DBDao {
 
     @Query("SELECT * FROM images WHERE id = :imageId")
     suspend fun getImage(imageId: String): Image
+
 }
 
 class Converters {

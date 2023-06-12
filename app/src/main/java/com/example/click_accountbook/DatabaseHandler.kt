@@ -138,6 +138,10 @@ class DatabaseHandler(context: Context) {
         return dbDao.getAllReceipts()
     }
 
+    suspend fun getAllItems() : List<Item>{
+        return dbDao.getAllItems()
+    }
+
     suspend fun getImagesForReceipt(receiptId: String): List<Image> {
         return dbDao.getImagesForReceipt(receiptId)
     }
